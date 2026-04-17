@@ -1,26 +1,25 @@
 <?php
-
-declare(strict_types=1);
+require_once __DIR__ . '/vendor/autoload.php';
 
 use App\Core\Router;
-use App\Controllers\ProductController;
 
-$router = new Router();
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: http://localhost:3000');
+header('Access-Control-Allow-Headers: Authorization, Content-Type');
+header('Access-Control-Allow-Methods: GET, POST, PATCH, OPTIONS');
 
-// ── Public routes (no auth) ───────────────────────────────────────────────────
-$router->get('/health', fn() => print json_encode([
-    'status'  => 'ok',
-    'service' => 'php-products-api',
-]));
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
 
-// ── Protected routes (JWT cookie required) ────────────────────────────────────
-$router->get('/products', [ProductController::class, 'index']);
+$db = new PDO(
+    sprintf('pgsql:host=%s;port=%s;dbname=%s',
+        getenv('DB_HOST'), getenv('DB_PORT'), getenv('DB_NAME')),
+    getenv('DB_USER'),
+    getenv('DB_PASSWORD'),
+    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+);
 
-// Add more routes here, for example:
-// $router->post('/products',       [ProductController::class, 'store']);
-// $router->get('/products/{id}',   [ProductController::class, 'show']);
-// $router->delete('/products/{id}',[ProductController::class, 'destroy']);
-// $router->get('/orders',          [OrderController::class,   'index']);
-
-// ── Dispatch ──────────────────────────────────────────────────────────────────
-$router->dispatch();
+$router = new Router($db);
+$router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);

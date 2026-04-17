@@ -1,58 +1,52 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../config/axios';
-
-// ── Context ──────────────────────────────────────────────────────────────────
 
 const AuthContext = createContext(null);
 
-// ── Provider — runs the session check exactly once for the whole app ──────────
+// ── Hardcoded admin credentials (replace with API call later) ─────────────────
+const ADMIN_EMAIL    = 'admin@pasadanow.com';
+const ADMIN_PASSWORD = 'admin123';
 
-export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const navigate = useNavigate();
+export function AuthProvider({ children }) {
+  const [user, setUser]         = useState(null);
+  const [isLoading, setIsLoading] = useState(true);  // true while we check storage
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        const checkSession = async () => {
-            try {
-                const { data } = await api.get('/api/auth/me');
-                setUser(data);
-            } catch {
-                setUser(null);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        checkSession();
-    }, []);
+  // On mount: restore session from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('adminUser');
+    if (saved) {
+      try { setUser(JSON.parse(saved)); } catch { /* corrupted — ignore */ }
+    }
+    setIsLoading(false);
+  }, []);
 
-    const login = useCallback(async (username, password) => {
-        const { data } = await api.post('/api/auth/login', { username, password });
-        setUser(data);
-        navigate('/dashboard');
-    }, [navigate]);
+  const login = (email, password) => {
+    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      const adminUser = { email, role: 'admin' };
+      setUser(adminUser);
+      localStorage.setItem('adminUser', JSON.stringify(adminUser));
+      navigate('/admin');
+      return true;
+    }
+    return false;
+  };
 
-    const logout = useCallback(async () => {
-        try {
-            await api.post('/api/auth/logout');
-        } finally {
-            setUser(null);
-            navigate('/login');
-        }
-    }, [navigate]);
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('adminUser');
+    navigate('/admin/login');
+  };
 
-    return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout }}>
-            {children}
-        </AuthContext.Provider>
-    );
-};
+  return (
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
 
-// ── Hook — just reads from context, zero side effects ────────────────────────
-
-export const useAuth = () => {
-    const ctx = useContext(AuthContext);
-    if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');
-    return ctx;
-};
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');
+  return ctx;
+}

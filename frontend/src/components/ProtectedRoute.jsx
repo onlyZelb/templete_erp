@@ -13,7 +13,7 @@ const ProtectedRoute = ({ children }) => {
         );
     }
 
-    return isAuthenticated ? children : <Navigate to="/login" replace />;
+    return isAuthenticated ? children : <Navigate to="/admin/login" replace />;
 };
 
 export default ProtectedRoute;
