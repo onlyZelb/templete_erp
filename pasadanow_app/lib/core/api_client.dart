@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiClient {
-  // ✅ FIX: Added WebOptions so flutter_secure_storage works on Chrome
   static const _storage = FlutterSecureStorage(
     webOptions: WebOptions(
       dbName: 'pasadanow',
@@ -19,12 +18,10 @@ class ApiClient {
 
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        // ✅ FIX: Wrapped storage read in try/catch — prevents
-        // "Cannot send Null" crash on Chrome when storage throws
         try {
-          final token = await _storage.read(key: 'jwt_token');
+          final token = await _storage.read(key: 'auth_token');
           if (token != null) {
-            options.headers['Cookie'] = 'jwt=$token';
+            options.headers['Authorization'] = 'Bearer $token';
           }
         } catch (_) {
           // Storage unavailable (e.g. first run on web) — proceed without token

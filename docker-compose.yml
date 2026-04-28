@@ -58,6 +58,9 @@ services:
       - DB_PASSWORD=password
       - DB_NAME=auth_db
       - JWT_SECRET=Zm9ydHktdHdvLWlzLXRoZS1hbnN3ZXItdG8tbGlmZS10aGUtdW5pdmVyc2UtYW5kLWV2ZXJ5dGhpbmc=
+    volumes:
+      - ./php/src:/var/www/html/src
+      - ./php/index.php:/var/www/html/index.php
 
   # ── Driver/Earnings/Admin API (Django) ────────────────────────────────────
   django:

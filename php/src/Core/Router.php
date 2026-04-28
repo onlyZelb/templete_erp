@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Core;
 
 use App\Controllers\RideController;
@@ -19,9 +22,14 @@ class Router {
         // Strip query string
         $path = strtok($uri, '?');
 
-        // Public route — no JWT needed
+        // Public routes — no JWT needed
         if ($method === 'GET' && $path === '/rides/fare') {
             $controller->fareEstimate();
+            return;
+        }
+
+        if ($method === 'GET' && $path === '/drivers/online') {
+            $controller->onlineDrivers();
             return;
         }
 
@@ -37,6 +45,12 @@ class Router {
 
             $method === 'PATCH' && preg_match('#^/rides/(\d+)/cancel$#', $path, $m)
                 => $controller->cancel($user, (int)$m[1]),
+
+            $method === 'GET' && preg_match('#^/rides/(\d+)/status$#', $path, $m)
+                => $controller->rideStatus((int)$m[1]),
+
+            $method === 'POST' && preg_match('#^/rides/(\d+)/location$#', $path, $m)
+                => $controller->commuterLocation($user, (int)$m[1]),
 
             default => $this->notFound(),
         };

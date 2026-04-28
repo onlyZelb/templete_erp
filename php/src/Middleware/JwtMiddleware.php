@@ -18,10 +18,20 @@ class JwtMiddleware
             exit();
         }
 
-        $token = $_COOKIE['jwt'] ?? null;
+        // Try Authorization: Bearer <token> header first, then fall back to cookie
+        $token = null;
+
+        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        if (str_starts_with($authHeader, 'Bearer ')) {
+            $token = substr($authHeader, 7);
+        }
 
         if (!$token) {
-            self::abort(401, 'No authentication cookie found. Please log in.');
+            $token = $_COOKIE['jwt'] ?? null;
+        }
+
+        if (!$token) {
+            self::abort(401, 'No authentication token found. Please log in.');
         }
 
         $secret = getenv('JWT_SECRET');

@@ -61,7 +61,8 @@ public class SecurityConfig {
         // setAllowedOriginPatterns supports '*' wildcard and works with allowCredentials(true)
         configuration.setAllowedOriginPatterns(List.of(
                 "http://localhost:3000",   // React via Docker
-                "http://localhost:5173",   // React via Vite direct
+                "http://localhost:5173",
+                "http://192.168.*.*",   // React via Vite direct
                 "http://localhost:*"       // any other local port
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));

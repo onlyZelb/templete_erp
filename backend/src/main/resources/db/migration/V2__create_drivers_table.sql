@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS drivers (
     toda_no         VARCHAR(50),
     profile_photo   TEXT,
     is_online       BOOLEAN      DEFAULT FALSE,
+    last_lat        DOUBLE PRECISION,
+    last_lng        DOUBLE PRECISION,
     verified_status VARCHAR(20)  NOT NULL DEFAULT 'pending'
                     CHECK (verified_status IN ('pending','verified','rejected')),
     created_at      TIMESTAMPTZ  DEFAULT NOW(),

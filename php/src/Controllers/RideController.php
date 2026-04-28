@@ -85,6 +85,126 @@ class RideController
         echo json_encode(['fare' => $fare]);
     }
 
+    // GET /drivers/online — commuter sees available drivers
+    public function onlineDrivers(): void
+    {
+        $stmt = $this->db->prepare("
+            SELECT id, username AS name, plate_no AS plate_number,
+                   'Tricycle' AS vehicle_type, is_online
+            FROM drivers
+            WHERE is_online = true AND verified_status = 'verified'
+        ");
+        $stmt->execute();
+        echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    // GET /rides/{id}/status — commuter polls ride status
+    public function rideStatus(int $id): void
+    {
+        $stmt = $this->db->prepare("
+            SELECT r.*, d.username AS driver_name,
+                   d.plate_no AS driver_plate
+            FROM rides r
+            LEFT JOIN drivers d ON d.id = r.driver_id
+            WHERE r.id = :id
+        ");
+        $stmt->execute(['id' => $id]);
+        $ride = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$ride) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Ride not found']);
+            return;
+        }
+        echo json_encode($ride);
+    }
+
+    // POST /rides/{id}/location — commuter pushes GPS to backend
+    public function commuterLocation(object $user, int $id): void
+    {
+        $data = json_decode(file_get_contents('php://input'), true);
+
+        $stmt = $this->db->prepare("
+            UPDATE rides
+            SET commuter_lat = :lat, commuter_lng = :lng,
+                updated_at = NOW()
+            WHERE id = :id
+            RETURNING id, commuter_lat, commuter_lng
+        ");
+        $stmt->execute([
+            'lat' => $data['lat'],
+            'lng' => $data['lng'],
+            'id'  => $id,
+        ]);
+        echo json_encode($stmt->fetch(PDO::FETCH_ASSOC));
+    }
+
+    // PATCH /drivers/me/status — driver toggles online/offline
+    public function updateDriverStatus(object $user): void
+    {
+        $data = json_decode(file_get_contents('php://input'), true);
+
+        $isOnline = isset($data['is_online']) ? (bool) $data['is_online'] : false;
+
+        $stmt = $this->db->prepare("
+            UPDATE drivers
+            SET is_online  = :is_online,
+                last_lat   = :lat,
+                last_lng   = :lng,
+                updated_at = NOW()
+            WHERE username = :username
+            RETURNING id, username, is_online, last_lat, last_lng
+        ");
+
+        $stmt->execute([
+            'is_online' => $isOnline ? 'true' : 'false',
+            'lat'       => $data['lat'] ?? null,
+            'lng'       => $data['lng'] ?? null,
+            'username'  => $user->sub,
+        ]);
+
+        $driver = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$driver) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Driver not found']);
+            return;
+        }
+
+        echo json_encode($driver);
+    }
+
+    // PATCH /drivers/me/location — driver pushes live GPS while online
+    public function updateDriverLocation(object $user): void
+    {
+        $data = json_decode(file_get_contents('php://input'), true);
+
+        $stmt = $this->db->prepare("
+            UPDATE drivers
+            SET last_lat   = :lat,
+                last_lng   = :lng,
+                updated_at = NOW()
+            WHERE username = :username AND is_online = true
+            RETURNING id, username, last_lat, last_lng
+        ");
+
+        $stmt->execute([
+            'lat'      => $data['lat'] ?? null,
+            'lng'      => $data['lng'] ?? null,
+            'username' => $user->sub,
+        ]);
+
+        $driver = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$driver) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Driver not found or currently offline']);
+            return;
+        }
+
+        echo json_encode($driver);
+    }
+
     private function getCommuterId(string $username): int
     {
         $stmt = $this->db->prepare("

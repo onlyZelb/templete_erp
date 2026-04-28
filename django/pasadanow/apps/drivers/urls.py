@@ -5,12 +5,18 @@ from .views import (
     AvailableDriversView,
     AcceptRideView,
     CompleteRideView,
+    PendingRideView,
+    DriverLocationView,
+    CommuterLocationView,
 )
 
 urlpatterns = [
-    path('me',                           DriverMeView.as_view()),
-    path('me/status',                    DriverStatusView.as_view()),
-    path('available',                    AvailableDriversView.as_view()),
-    path('rides/<int:ride_id>/accept',   AcceptRideView.as_view()),
-    path('rides/<int:ride_id>/complete', CompleteRideView.as_view()),
+    path('me',                                        DriverMeView.as_view()),
+    path('me/status',                                 DriverStatusView.as_view()),
+    path('me/location',                               DriverLocationView.as_view()),
+    path('available',                                 AvailableDriversView.as_view()),
+    path('rides/pending',                             PendingRideView.as_view()),
+    path('rides/<int:ride_id>/accept',                AcceptRideView.as_view()),
+    path('rides/<int:ride_id>/complete',              CompleteRideView.as_view()),
+    path('rides/<int:ride_id>/commuter-location',     CommuterLocationView.as_view()),
 ]
