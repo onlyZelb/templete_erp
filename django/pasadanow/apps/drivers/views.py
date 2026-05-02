@@ -208,7 +208,7 @@ class PendingRideView(APIView):
 
 
 class DriverLocationView(APIView):
-    def post(self, request):
+    def post(self, request, ride_id=None):
         from django.db import connection
         driver = get_driver(get_username(request))
         lat = request.data.get('lat')
@@ -220,6 +220,9 @@ class DriverLocationView(APIView):
                 WHERE driver_id = %s AND status IN ('accepted','ongoing')
             """, [lat, lng, driver.id])
         return Response({'status': 'ok'})
+
+    def patch(self, request, ride_id=None):
+        return self.post(request, ride_id)
 
 
 class CommuterLocationView(APIView):

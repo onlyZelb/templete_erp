@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/api_client.dart';
 import '../../core/constants.dart';
+import '../../widgets/chat_widget.dart';
 import '../login_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -111,26 +112,24 @@ class DriverProfile {
   factory DriverProfile.fromJson(Map<String, dynamic> json) {
     return DriverProfile(
       username: json['username']?.toString() ?? '',
-      fullName: json['full_name']?.toString() ??
-          json['fullName']?.toString() ?? '',
-      phone: json['phone']?.toString() ??
-          json['contact']?.toString() ?? '',
+      fullName:
+          json['full_name']?.toString() ?? json['fullName']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? json['contact']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       address: json['address']?.toString() ?? '',
       age: json['age']?.toString() ?? '',
       plateNumber: json['plate_number']?.toString() ?? '',
       licenseNumber: json['license_number']?.toString() ?? '',
       organization: json['organization']?.toString() ?? '',
-      contact: json['contact']?.toString() ??
-          json['phone']?.toString() ?? '',
-      profilePhotoUrl: json['profile_photo']?.toString() ??
-          json['profilePhoto']?.toString(),
-      licensePhotoUrl: json['photo_license']?.toString() ??
-          json['licensePhoto']?.toString(),
-      vehiclePhotoUrl: json['photo_plate']?.toString() ??
-          json['vehiclePhoto']?.toString(),
-      todaPhotoUrl: json['photo_toda']?.toString() ??
-          json['todaPhoto']?.toString(),
+      contact: json['contact']?.toString() ?? json['phone']?.toString() ?? '',
+      profilePhotoUrl:
+          json['profile_photo']?.toString() ?? json['profilePhoto']?.toString(),
+      licensePhotoUrl:
+          json['photo_license']?.toString() ?? json['licensePhoto']?.toString(),
+      vehiclePhotoUrl:
+          json['photo_plate']?.toString() ?? json['vehiclePhoto']?.toString(),
+      todaPhotoUrl:
+          json['photo_toda']?.toString() ?? json['todaPhoto']?.toString(),
     );
   }
 
@@ -227,8 +226,7 @@ class _DriverHomeState extends State<DriverHome>
     super.initState();
     _animController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 600));
-    _fadeAnim =
-        CurvedAnimation(parent: _animController, curve: Curves.easeOut);
+    _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
     _animController.forward();
     _loadEarnings();
     _loadDriverProfile();
@@ -417,12 +415,11 @@ class _DriverHomeState extends State<DriverHome>
       final res = await http.get(url);
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
-        final coords =
-            data['routes'][0]['geometry']['coordinates'] as List;
+        final coords = data['routes'][0]['geometry']['coordinates'] as List;
         setState(() {
           _routePoints = coords
-              .map<LatLng>((c) => LatLng(
-                  (c[1] as num).toDouble(), (c[0] as num).toDouble()))
+              .map<LatLng>((c) =>
+                  LatLng((c[1] as num).toDouble(), (c[0] as num).toDouble()))
               .toList();
         });
         if (_routePoints.isNotEmpty) {
@@ -440,8 +437,8 @@ class _DriverHomeState extends State<DriverHome>
 
   void _startRidePolling() {
     _ridePollingTimer?.cancel();
-    _ridePollingTimer = Timer.periodic(
-        const Duration(seconds: 3), (_) => _pollPendingRide());
+    _ridePollingTimer =
+        Timer.periodic(const Duration(seconds: 3), (_) => _pollPendingRide());
     _pollPendingRide();
   }
 
@@ -469,8 +466,8 @@ class _DriverHomeState extends State<DriverHome>
       }
       try {
         final dio = ApiClient.build(ApiConstants.djangoBase);
-        final res = await dio.get(
-            '/api/drivers/rides/${_activeRide!.id}/commuter-location');
+        final res = await dio
+            .get('/api/drivers/rides/${_activeRide!.id}/commuter-location');
         final data = res.data as Map<String, dynamic>?;
         if (data != null &&
             data['lat'] != null &&
@@ -520,8 +517,7 @@ class _DriverHomeState extends State<DriverHome>
     } finally {
       if (mounted) {
         _showSnack(
-            'Ride completed! ₱${earned.toStringAsFixed(2)} earned.',
-            _green);
+            'Ride completed! ₱${earned.toStringAsFixed(2)} earned.', _green);
         setState(() {
           _loading = false;
           _activeRide = null;
@@ -551,8 +547,7 @@ class _DriverHomeState extends State<DriverHome>
       content: Text(msg),
       backgroundColor: color,
       behavior: SnackBarBehavior.floating,
-      shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     ));
   }
 
@@ -617,7 +612,7 @@ class _DriverHomeState extends State<DriverHome>
       body: FadeTransition(
         opacity: _fadeAnim,
         child: _tab == 0
-            ? _buildDashboardTab()
+            ? _buildDashboardTab(auth)
             : _tab == 1
                 ? _buildEarningsTab()
                 : _buildProfileTab(auth),
@@ -627,7 +622,6 @@ class _DriverHomeState extends State<DriverHome>
 
   // ─────────────────────────────────────────────────────────────────────────
   // APP BAR
-  // FIX: removed speed row from GPS badge to prevent bottom overflow
   // ─────────────────────────────────────────────────────────────────────────
 
   PreferredSizeWidget _buildAppBar(AuthProvider auth) {
@@ -682,27 +676,24 @@ class _DriverHomeState extends State<DriverHome>
                 children: [
                   RichText(
                     text: const TextSpan(
-                      style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w900),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                       children: [
                         TextSpan(
                             text: 'Pasada',
                             style: TextStyle(color: _textPrimary)),
-                        TextSpan(
-                            text: 'Now',
-                            style: TextStyle(color: _orange)),
+                        TextSpan(text: 'Now', style: TextStyle(color: _orange)),
                       ],
                     ),
                   ),
                   const SizedBox(width: 7),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 7, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
                       color: _o(_accent, 0.18),
                       borderRadius: BorderRadius.circular(4),
-                      border:
-                          Border.all(color: _o(_accent, 0.35), width: 1),
+                      border: Border.all(color: _o(_accent, 0.35), width: 1),
                     ),
                     child: const Text(
                       'DRIVER',
@@ -728,21 +719,18 @@ class _DriverHomeState extends State<DriverHome>
         ],
       ),
       actions: [
-        // ── GPS live badge — FIXED: only shows LIVE label + accuracy, no speed ──
+        // ── GPS live badge ────────────────────────────────────────────────
         GestureDetector(
           onTap: _initGPS,
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
               decoration: BoxDecoration(
                 color: _o(_gpsAccuracy != null ? _green : _orange, 0.15),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                    color: _o(
-                        _gpsAccuracy != null ? _green : _orange, 0.45),
+                    color: _o(_gpsAccuracy != null ? _green : _orange, 0.45),
                     width: 1),
               ),
               child: Row(
@@ -756,7 +744,6 @@ class _DriverHomeState extends State<DriverHome>
                           decoration: const BoxDecoration(
                               color: _orange, shape: BoxShape.circle)),
                   const SizedBox(width: 5),
-                  // FIX: removed speed Text to prevent AppBar bottom overflow
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -800,8 +787,8 @@ class _DriverHomeState extends State<DriverHome>
               child: Container(
                 width: 8,
                 height: 8,
-                decoration: const BoxDecoration(
-                    color: _accent, shape: BoxShape.circle),
+                decoration:
+                    const BoxDecoration(color: _accent, shape: BoxShape.circle),
               ),
             ),
           ],
@@ -835,8 +822,8 @@ class _DriverHomeState extends State<DriverHome>
         selectedItemColor: _accent,
         unselectedItemColor: _textMuted,
         elevation: 0,
-        selectedLabelStyle: const TextStyle(
-            fontSize: 11, fontWeight: FontWeight.w600),
+        selectedLabelStyle:
+            const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
         unselectedLabelStyle: const TextStyle(fontSize: 11),
         items: const [
           BottomNavigationBarItem(
@@ -856,9 +843,8 @@ class _DriverHomeState extends State<DriverHome>
     );
   }
 
-  // FIX: removed auth parameter and _buildGreeting call — greeting is now
-  // only in the AppBar, eliminating the duplicate profile row.
-  Widget _buildDashboardTab() {
+  // NOTE: auth is now passed in so _buildActiveRideBanner can access username.
+  Widget _buildDashboardTab(AuthProvider auth) {
     return Column(children: [
       Container(
         color: const Color(0xFF0D1A30),
@@ -870,7 +856,7 @@ class _DriverHomeState extends State<DriverHome>
         ]),
       ),
       Expanded(child: _buildRealtimeMap()),
-      if (_activeRide != null) _buildActiveRideBanner(),
+      if (_activeRide != null) _buildActiveRideBanner(auth),
     ]);
   }
 
@@ -887,8 +873,7 @@ class _DriverHomeState extends State<DriverHome>
         ),
         children: [
           TileLayer(
-            urlTemplate:
-                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
             userAgentPackageName: 'com.pasadanow.driver',
             maxZoom: 19,
           ),
@@ -926,40 +911,32 @@ class _DriverHomeState extends State<DriverHome>
                 width: 120,
                 height: 56,
                 alignment: Alignment.topCenter,
-                child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(6),
-                          boxShadow: const [
-                            BoxShadow(
-                                color: Colors.black26, blurRadius: 4)
-                          ],
-                        ),
-                        child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _PulsingDot(color: _accent),
-                              const SizedBox(width: 4),
-                              Text(
-                                _activeRide!.passengerName
-                                    .split(' ')
-                                    .first,
-                                style: const TextStyle(
-                                    color: Colors.black87,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w700),
-                              ),
-                            ]),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black26, blurRadius: 4)
+                      ],
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      _PulsingDot(color: _accent),
+                      const SizedBox(width: 4),
+                      Text(
+                        _activeRide!.passengerName.split(' ').first,
+                        style: const TextStyle(
+                            color: Colors.black87,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700),
                       ),
-                      const SizedBox(height: 2),
-                      const Icon(Icons.person_pin_circle,
-                          color: _accent, size: 24),
                     ]),
+                  ),
+                  const SizedBox(height: 2),
+                  const Icon(Icons.person_pin_circle, color: _accent, size: 24),
+                ]),
               ),
             if (_activeRide != null)
               Marker(
@@ -979,9 +956,7 @@ class _DriverHomeState extends State<DriverHome>
                 height: 56,
                 alignment: Alignment.topCenter,
                 child: _RouteMarker(
-                    color: _red,
-                    icon: Icons.location_on,
-                    label: 'Drop off'),
+                    color: _red, icon: Icons.location_on, label: 'Drop off'),
               ),
           ]),
           const RichAttributionWidget(attributions: [
@@ -994,27 +969,23 @@ class _DriverHomeState extends State<DriverHome>
           color: Colors.black38,
           child: Center(
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 20, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               decoration: BoxDecoration(
                 color: _bgCard,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: _border),
               ),
-              child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: _accent),
-                    ),
-                    SizedBox(width: 12),
-                    Text('Calculating route…',
-                        style:
-                            TextStyle(color: _textPrimary, fontSize: 13)),
-                  ]),
+              child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child:
+                      CircularProgressIndicator(strokeWidth: 2, color: _accent),
+                ),
+                SizedBox(width: 12),
+                Text('Calculating route…',
+                    style: TextStyle(color: _textPrimary, fontSize: 13)),
+              ]),
             ),
           ),
         ),
@@ -1040,8 +1011,7 @@ class _DriverHomeState extends State<DriverHome>
               final bounds = LatLngBounds.fromPoints(
                   [_driverLocation, _commuterLiveLocation!]);
               _mapController.fitCamera(CameraFit.bounds(
-                  bounds: bounds,
-                  padding: const EdgeInsets.all(60)));
+                  bounds: bounds, padding: const EdgeInsets.all(60)));
             }),
           ],
         ]),
@@ -1051,35 +1021,31 @@ class _DriverHomeState extends State<DriverHome>
           top: 12,
           left: 12,
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
             decoration: BoxDecoration(
               color: _o(const Color(0xFF0D1A30), 0.9),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: _border),
             ),
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(mainAxisSize: MainAxisSize.min, children: [
-                    _PulsingDot(color: _green),
-                    const SizedBox(width: 5),
-                    const Text('GPS LIVE',
-                        style: TextStyle(
-                            color: _green,
-                            fontSize: 8,
-                            fontWeight: FontWeight.w700)),
-                  ]),
-                  Text(
-                      '±${_gpsAccuracy!.toStringAsFixed(0)}m · $_gpsAccuracyLabel',
-                      style:
-                          TextStyle(color: _gpsAccuracyColor, fontSize: 8)),
-                  Text(_gpsSpeedLabel,
-                      style: const TextStyle(
-                          color: _textPrimary,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700)),
-                ]),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                _PulsingDot(color: _green),
+                const SizedBox(width: 5),
+                const Text('GPS LIVE',
+                    style: TextStyle(
+                        color: _green,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w700)),
+              ]),
+              Text('±${_gpsAccuracy!.toStringAsFixed(0)}m · $_gpsAccuracyLabel',
+                  style: TextStyle(color: _gpsAccuracyColor, fontSize: 8)),
+              Text(_gpsSpeedLabel,
+                  style: const TextStyle(
+                      color: _textPrimary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700)),
+            ]),
           ),
         ),
       if (!_isOnline)
@@ -1089,27 +1055,22 @@ class _DriverHomeState extends State<DriverHome>
               color: _o(Colors.black, 0.45),
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   decoration: BoxDecoration(
                     color: _bgCard,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: _border),
                   ),
-                  child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.signal_wifi_off_outlined,
-                            color: _textMuted, size: 36),
-                        const SizedBox(height: 8),
-                        const Text(
-                            'Go online to start\naccepting rides',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                color: _textMuted,
-                                fontSize: 13,
-                                height: 1.5)),
-                      ]),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.signal_wifi_off_outlined,
+                        color: _textMuted, size: 36),
+                    const SizedBox(height: 8),
+                    const Text('Go online to start\naccepting rides',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: _textMuted, fontSize: 13, height: 1.5)),
+                  ]),
                 ),
               ),
             ),
@@ -1119,8 +1080,7 @@ class _DriverHomeState extends State<DriverHome>
         right: 6,
         bottom: 4,
         child: Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.75),
             borderRadius: BorderRadius.circular(3),
@@ -1142,16 +1102,15 @@ class _DriverHomeState extends State<DriverHome>
           color: _bgCard,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: _border),
-          boxShadow: [
-            BoxShadow(color: _o(Colors.black, 0.3), blurRadius: 6)
-          ],
+          boxShadow: [BoxShadow(color: _o(Colors.black, 0.3), blurRadius: 6)],
         ),
         child: Center(child: Icon(icon, color: _textPrimary, size: 18)),
       ),
     );
   }
 
-  Widget _buildActiveRideBanner() {
+  // ── Active ride banner — ChatWidget integrated ────────────────────────────
+  Widget _buildActiveRideBanner(AuthProvider auth) {
     final ride = _activeRide!;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -1167,8 +1126,7 @@ class _DriverHomeState extends State<DriverHome>
       ),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Row(children: [
-          _statusBadge(
-              Icons.radio_button_checked, 'Active Ride', _green),
+          _statusBadge(Icons.radio_button_checked, 'Active Ride', _green),
           const Spacer(),
           _fareBadge(ride.fare),
         ]),
@@ -1183,45 +1141,56 @@ class _DriverHomeState extends State<DriverHome>
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(ride.passengerName,
-                      style: const TextStyle(
-                          color: _textPrimary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13)),
-                  const SizedBox(height: 2),
-                  Row(children: [
-                    Text(
-                      '${ride.distanceKm.toStringAsFixed(1)} km  ·  ₱${ride.fare.toStringAsFixed(2)}',
-                      style:
-                          const TextStyle(color: _textMuted, fontSize: 11),
-                    ),
-                    if (_commuterLiveLocation != null) ...[
-                      const SizedBox(width: 6),
-                      _PulsingDot(color: _accent),
-                      const SizedBox(width: 3),
-                      const Text('Commuter live',
-                          style: TextStyle(color: _accent, fontSize: 10)),
-                    ],
-                  ]),
-                ]),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(ride.passengerName,
+                  style: const TextStyle(
+                      color: _textPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13)),
+              const SizedBox(height: 2),
+              Row(children: [
+                Text(
+                  '${ride.distanceKm.toStringAsFixed(1)} km  ·  ₱${ride.fare.toStringAsFixed(2)}',
+                  style: const TextStyle(color: _textMuted, fontSize: 11),
+                ),
+                if (_commuterLiveLocation != null) ...[
+                  const SizedBox(width: 6),
+                  _PulsingDot(color: _accent),
+                  const SizedBox(width: 3),
+                  const Text('Commuter live',
+                      style: TextStyle(color: _accent, fontSize: 10)),
+                ],
+              ]),
+            ]),
           ),
         ]),
         const SizedBox(height: 10),
-        _routeLabel(Icons.radio_button_checked, _green, 'Pickup',
-            ride.pickupLabel),
+        _routeLabel(
+            Icons.radio_button_checked, _green, 'Pickup', ride.pickupLabel),
         const SizedBox(height: 4),
         _routeLabel(
             Icons.location_on_outlined, _red, 'Dropoff', ride.dropoffLabel),
         const SizedBox(height: 12),
+
+        // ── ChatWidget ────────────────────────────────────────────────────
+        SizedBox(
+          height: 260,
+          child: ChatWidget(
+            rideId: ride.id.toString(),
+            username: auth.username ?? 'driver',
+            role: 'driver',
+          ),
+        ),
+        const SizedBox(height: 12),
+        // ─────────────────────────────────────────────────────────────────
+
         Row(children: [
           if (_commuterLiveLocation != null)
             Expanded(
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 margin: const EdgeInsets.only(right: 10),
                 decoration: BoxDecoration(
                   color: _o(_accent, 0.1),
@@ -1312,32 +1281,24 @@ class _DriverHomeState extends State<DriverHome>
         const SizedBox(width: 5),
         Text('₱${fare.toStringAsFixed(2)}',
             style: const TextStyle(
-                color: _orange,
-                fontWeight: FontWeight.w800,
-                fontSize: 15)),
+                color: _orange, fontWeight: FontWeight.w800, fontSize: 15)),
       ]),
     );
   }
 
-  Widget _routeLabel(
-      IconData icon, Color color, String heading, String sub) {
+  Widget _routeLabel(IconData icon, Color color, String heading, String sub) {
     return Row(children: [
       Icon(icon, color: color, size: 18),
       const SizedBox(width: 8),
       Expanded(
-        child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(heading,
-                  style: TextStyle(
-                      color: color,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600)),
-              Text(sub,
-                  style:
-                      const TextStyle(color: _textPrimary, fontSize: 12),
-                  overflow: TextOverflow.ellipsis),
-            ]),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(heading,
+              style: TextStyle(
+                  color: color, fontSize: 10, fontWeight: FontWeight.w600)),
+          Text(sub,
+              style: const TextStyle(color: _textPrimary, fontSize: 12),
+              overflow: TextOverflow.ellipsis),
+        ]),
       ),
     ]);
   }
@@ -1374,9 +1335,7 @@ class _DriverHomeState extends State<DriverHome>
       const SizedBox(width: 8),
       Expanded(
           child: _statCard(
-              icon: _isOnline
-                  ? Icons.wifi_outlined
-                  : Icons.wifi_off_outlined,
+              icon: _isOnline ? Icons.wifi_outlined : Icons.wifi_off_outlined,
               iconColor: _isOnline ? _green : _textMuted,
               iconBg: _o(_isOnline ? _green : _textMuted, 0.12),
               label: 'STATUS',
@@ -1400,37 +1359,30 @@ class _DriverHomeState extends State<DriverHome>
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: _border, width: 1),
       ),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(7)),
-              child:
-                  Center(child: Icon(icon, color: iconColor, size: 15)),
-            ),
-            const SizedBox(height: 6),
-            Text(value,
-                style: TextStyle(
-                    color: valueColor ?? _textPrimary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800)),
-            Text(label,
-                style: const TextStyle(
-                    color: _textMuted,
-                    fontSize: 8,
-                    letterSpacing: 0.8)),
-          ]),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+              color: iconBg, borderRadius: BorderRadius.circular(7)),
+          child: Center(child: Icon(icon, color: iconColor, size: 15)),
+        ),
+        const SizedBox(height: 6),
+        Text(value,
+            style: TextStyle(
+                color: valueColor ?? _textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w800)),
+        Text(label,
+            style: const TextStyle(
+                color: _textMuted, fontSize: 8, letterSpacing: 0.8)),
+      ]),
     );
   }
 
   Widget _buildStatusBanner() {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: _bgCard,
         borderRadius: BorderRadius.circular(10),
@@ -1446,9 +1398,7 @@ class _DriverHomeState extends State<DriverHome>
             boxShadow: _isOnline
                 ? [
                     BoxShadow(
-                        color: _o(_green, 0.5),
-                        blurRadius: 8,
-                        spreadRadius: 2)
+                        color: _o(_green, 0.5), blurRadius: 8, spreadRadius: 2)
                   ]
                 : null,
           ),
@@ -1468,8 +1418,7 @@ class _DriverHomeState extends State<DriverHome>
         GestureDetector(
           onTap: _activeRide == null ? _toggleOnline : null,
           child: Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               color: _activeRide != null
                   ? _o(_textMuted, 0.2)
@@ -1526,22 +1475,17 @@ class _DriverHomeState extends State<DriverHome>
           if (_summary != null) ...[
             Row(children: [
               Expanded(
-                  child: _earningsStat(
-                      Icons.today_outlined,
-                      'Today',
+                  child: _earningsStat(Icons.today_outlined, 'Today',
                       '₱${(_summary!['today'] as num).toStringAsFixed(2)}')),
               const SizedBox(width: 12),
               Expanded(
-                  child: _earningsStat(
-                      Icons.emoji_events_outlined,
-                      'All-time',
+                  child: _earningsStat(Icons.emoji_events_outlined, 'All-time',
                       '₱${(_summary!['all_time'] as num).toStringAsFixed(2)}')),
             ]),
             const SizedBox(height: 16),
           ],
           const Row(children: [
-            Icon(Icons.receipt_long_outlined,
-                color: _textPrimary, size: 18),
+            Icon(Icons.receipt_long_outlined, color: _textPrimary, size: 18),
             SizedBox(width: 8),
             Text('Earnings & History',
                 style: TextStyle(
@@ -1555,8 +1499,7 @@ class _DriverHomeState extends State<DriverHome>
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 40),
                 child: Column(children: [
-                  Icon(Icons.receipt_outlined,
-                      color: _textMuted, size: 52),
+                  Icon(Icons.receipt_outlined, color: _textMuted, size: 52),
                   const SizedBox(height: 12),
                   const Text('No earnings yet.',
                       style: TextStyle(color: _textMuted, fontSize: 14)),
@@ -1595,8 +1538,7 @@ class _DriverHomeState extends State<DriverHome>
                                     color: _textPrimary,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 15)),
-                            Text(
-                                'Ride #${e['ride']} · ${e['date']}',
+                            Text('Ride #${e['ride']} · ${e['date']}',
                                 style: const TextStyle(
                                     color: _textMuted, fontSize: 12)),
                           ]),
@@ -1618,23 +1560,17 @@ class _DriverHomeState extends State<DriverHome>
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _border, width: 1),
       ),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              Icon(icon, color: _textMuted, size: 14),
-              const SizedBox(width: 5),
-              Text(label,
-                  style:
-                      const TextStyle(color: _textMuted, fontSize: 12)),
-            ]),
-            const SizedBox(height: 4),
-            Text(value,
-                style: const TextStyle(
-                    color: _green,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800)),
-          ]),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(icon, color: _textMuted, size: 14),
+          const SizedBox(width: 5),
+          Text(label, style: const TextStyle(color: _textMuted, fontSize: 12)),
+        ]),
+        const SizedBox(height: 4),
+        Text(value,
+            style: const TextStyle(
+                color: _green, fontSize: 22, fontWeight: FontWeight.w800)),
+      ]),
     );
   }
 
@@ -1646,8 +1582,7 @@ class _DriverHomeState extends State<DriverHome>
     final profile = _driverProfile;
 
     if (_profileLoading && profile == null) {
-      return const Center(
-          child: CircularProgressIndicator(color: _accent));
+      return const Center(child: CircularProgressIndicator(color: _accent));
     }
 
     return RefreshIndicator(
@@ -1670,16 +1605,14 @@ class _DriverHomeState extends State<DriverHome>
             onEdit: () => _showEditDialog(
               title: 'Edit Personal Info',
               fields: [
-                _EditField(
-                    'Full Name', 'full_name', profile?.fullName ?? ''),
+                _EditField('Full Name', 'full_name', profile?.fullName ?? ''),
                 _EditField('Age', 'age', profile?.age ?? '',
                     keyboardType: TextInputType.number),
                 _EditField('Phone', 'phone', profile?.phone ?? '',
                     keyboardType: TextInputType.phone),
                 _EditField('Email', 'email', profile?.email ?? '',
                     keyboardType: TextInputType.emailAddress),
-                _EditField(
-                    'Address', 'address', profile?.address ?? ''),
+                _EditField('Address', 'address', profile?.address ?? ''),
               ],
             ),
             child: Column(children: [
@@ -1689,30 +1622,14 @@ class _DriverHomeState extends State<DriverHome>
                   profile?.fullName.isNotEmpty == true
                       ? profile!.fullName
                       : '—'),
-              _infoRow(
-                  Icons.cake_outlined,
-                  'Age',
-                  profile?.age.isNotEmpty == true
-                      ? profile!.age
-                      : '—'),
-              _infoRow(
-                  Icons.phone_outlined,
-                  'Phone',
-                  profile?.phone.isNotEmpty == true
-                      ? profile!.phone
-                      : '—'),
-              _infoRow(
-                  Icons.email_outlined,
-                  'Email',
-                  profile?.email.isNotEmpty == true
-                      ? profile!.email
-                      : '—'),
-              _infoRow(
-                  Icons.location_on_outlined,
-                  'Address',
-                  profile?.address.isNotEmpty == true
-                      ? profile!.address
-                      : '—'),
+              _infoRow(Icons.cake_outlined, 'Age',
+                  profile?.age.isNotEmpty == true ? profile!.age : '—'),
+              _infoRow(Icons.phone_outlined, 'Phone',
+                  profile?.phone.isNotEmpty == true ? profile!.phone : '—'),
+              _infoRow(Icons.email_outlined, 'Email',
+                  profile?.email.isNotEmpty == true ? profile!.email : '—'),
+              _infoRow(Icons.location_on_outlined, 'Address',
+                  profile?.address.isNotEmpty == true ? profile!.address : '—'),
             ]),
           ),
           const SizedBox(height: 16),
@@ -1723,8 +1640,8 @@ class _DriverHomeState extends State<DriverHome>
             onEdit: () => _showEditDialog(
               title: 'Edit Vehicle Info',
               fields: [
-                _EditField('Plate Number', 'plate_number',
-                    profile?.plateNumber ?? ''),
+                _EditField(
+                    'Plate Number', 'plate_number', profile?.plateNumber ?? ''),
                 _EditField("Driver's License No.", 'license_number',
                     profile?.licenseNumber ?? ''),
                 _EditField('Organization / TODA', 'organization',
@@ -1760,10 +1677,8 @@ class _DriverHomeState extends State<DriverHome>
             title: 'Account Info',
             titleIcon: Icons.manage_accounts_outlined,
             child: Column(children: [
-              _infoRow(Icons.person_outline, 'Username',
-                  auth.username ?? '—'),
-              _infoRow(
-                  Icons.verified_user_outlined, 'Role', 'Driver'),
+              _infoRow(Icons.person_outline, 'Username', auth.username ?? '—'),
+              _infoRow(Icons.verified_user_outlined, 'Role', 'Driver'),
               _infoRow(
                   Icons.business_outlined,
                   'Organization',
@@ -1779,10 +1694,8 @@ class _DriverHomeState extends State<DriverHome>
               if (_isOnline) await _toggleOnline();
               await auth.logout();
               if (context.mounted) {
-                Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const LoginScreen()));
+                Navigator.pushReplacement(context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()));
               }
             },
             child: Container(
@@ -1811,8 +1724,7 @@ class _DriverHomeState extends State<DriverHome>
     );
   }
 
-  Widget _buildProfileHeroCard(
-      AuthProvider auth, DriverProfile? profile) {
+  Widget _buildProfileHeroCard(AuthProvider auth, DriverProfile? profile) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1850,23 +1762,19 @@ class _DriverHomeState extends State<DriverHome>
               ? profile!.fullName
               : auth.username ?? 'Driver',
           style: const TextStyle(
-              color: _textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w800),
+              color: _textPrimary, fontSize: 18, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 2),
         Text('@${auth.username ?? ''}',
             style: const TextStyle(color: _textMuted, fontSize: 12)),
         const SizedBox(height: 8),
         Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
           decoration: BoxDecoration(
             color: _o(_isOnline ? _green : _textMuted, 0.12),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-                color: _o(_isOnline ? _green : _textMuted, 0.3),
-                width: 1),
+                color: _o(_isOnline ? _green : _textMuted, 0.3), width: 1),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Icon(
@@ -1887,8 +1795,7 @@ class _DriverHomeState extends State<DriverHome>
         if (profile?.phone.isNotEmpty == true) ...[
           const SizedBox(height: 8),
           Text(profile!.phone,
-              style:
-                  const TextStyle(color: _textMuted, fontSize: 12)),
+              style: const TextStyle(color: _textMuted, fontSize: 12)),
         ],
       ]),
     );
@@ -1902,35 +1809,33 @@ class _DriverHomeState extends State<DriverHome>
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _o(_green, 0.3), width: 1),
       ),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              _PulsingDot(color: _green),
-              const SizedBox(width: 8),
-              const Text('Live GPS Status',
-                  style: TextStyle(
-                      color: _textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700)),
-            ]),
-            const SizedBox(height: 12),
-            _infoRow(
-              Icons.gps_fixed_outlined,
-              'Accuracy',
-              '±${_gpsAccuracy!.toStringAsFixed(0)} m ($_gpsAccuracyLabel)',
-              valueColor: _gpsAccuracyColor,
-            ),
-            _infoRow(Icons.speed_outlined, 'Speed', _gpsSpeedLabel),
-            _infoRow(
-              Icons.location_on_outlined,
-              'Position',
-              '${_driverLocation.latitude.toStringAsFixed(5)}, '
-                  '${_driverLocation.longitude.toStringAsFixed(5)}',
-            ),
-            _infoRow(Icons.sync_outlined, 'Push',
-                _isOnline ? 'Broadcasting every 2s' : 'Offline'),
-          ]),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          _PulsingDot(color: _green),
+          const SizedBox(width: 8),
+          const Text('Live GPS Status',
+              style: TextStyle(
+                  color: _textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700)),
+        ]),
+        const SizedBox(height: 12),
+        _infoRow(
+          Icons.gps_fixed_outlined,
+          'Accuracy',
+          '±${_gpsAccuracy!.toStringAsFixed(0)} m ($_gpsAccuracyLabel)',
+          valueColor: _gpsAccuracyColor,
+        ),
+        _infoRow(Icons.speed_outlined, 'Speed', _gpsSpeedLabel),
+        _infoRow(
+          Icons.location_on_outlined,
+          'Position',
+          '${_driverLocation.latitude.toStringAsFixed(5)}, '
+              '${_driverLocation.longitude.toStringAsFixed(5)}',
+        ),
+        _infoRow(Icons.sync_outlined, 'Push',
+            _isOnline ? 'Broadcasting every 2s' : 'Offline'),
+      ]),
     );
   }
 
@@ -1942,40 +1847,38 @@ class _DriverHomeState extends State<DriverHome>
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _border, width: 1),
       ),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              Icon(Icons.folder_outlined, color: _orange, size: 16),
-              const SizedBox(width: 7),
-              const Text('Credential Documents',
-                  style: TextStyle(
-                      color: _textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700)),
-            ]),
-            const SizedBox(height: 14),
-            _buildDocumentRow(
-              label: "Driver's License",
-              photoUrl: profile?.licensePhotoUrl,
-              icon: Icons.credit_card_outlined,
-              slot: _DocSlot.license,
-            ),
-            const SizedBox(height: 10),
-            _buildDocumentRow(
-              label: 'Vehicle / Plate',
-              photoUrl: profile?.vehiclePhotoUrl,
-              icon: Icons.directions_car_outlined,
-              slot: _DocSlot.vehicle,
-            ),
-            const SizedBox(height: 10),
-            _buildDocumentRow(
-              label: 'TODA Clearance',
-              photoUrl: profile?.todaPhotoUrl,
-              icon: Icons.description_outlined,
-              slot: _DocSlot.toda,
-            ),
-          ]),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.folder_outlined, color: _orange, size: 16),
+          const SizedBox(width: 7),
+          const Text('Credential Documents',
+              style: TextStyle(
+                  color: _textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700)),
+        ]),
+        const SizedBox(height: 14),
+        _buildDocumentRow(
+          label: "Driver's License",
+          photoUrl: profile?.licensePhotoUrl,
+          icon: Icons.credit_card_outlined,
+          slot: _DocSlot.license,
+        ),
+        const SizedBox(height: 10),
+        _buildDocumentRow(
+          label: 'Vehicle / Plate',
+          photoUrl: profile?.vehiclePhotoUrl,
+          icon: Icons.directions_car_outlined,
+          slot: _DocSlot.vehicle,
+        ),
+        const SizedBox(height: 10),
+        _buildDocumentRow(
+          label: 'TODA Clearance',
+          photoUrl: profile?.todaPhotoUrl,
+          icon: Icons.description_outlined,
+          slot: _DocSlot.toda,
+        ),
+      ]),
     );
   }
 
@@ -1995,8 +1898,8 @@ class _DriverHomeState extends State<DriverHome>
         decoration: BoxDecoration(
           color: _o(hasPhoto ? _green : _textMuted, 0.06),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-              color: _o(hasPhoto ? _green : _border, 0.4), width: 1),
+          border:
+              Border.all(color: _o(hasPhoto ? _green : _border, 0.4), width: 1),
         ),
         child: Row(children: [
           ClipRRect(
@@ -2009,43 +1912,37 @@ class _DriverHomeState extends State<DriverHome>
                         width: 56,
                         height: 56,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            _docPlaceholder(icon)))
+                        errorBuilder: (_, __, ___) => _docPlaceholder(icon)))
                 : _docPlaceholder(icon),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label,
-                      style: const TextStyle(
-                          color: _textPrimary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 3),
-                  Row(children: [
-                    Icon(
-                      hasPhoto
-                          ? Icons.check_circle_outline_rounded
-                          : Icons.upload_outlined,
-                      size: 12,
-                      color: hasPhoto ? _green : _textMuted,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      hasPhoto
-                          ? 'Uploaded — tap to replace'
-                          : 'Tap to upload',
-                      style: TextStyle(
-                          color: hasPhoto ? _green : _textMuted,
-                          fontSize: 11),
-                    ),
-                  ]),
-                ]),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(label,
+                  style: const TextStyle(
+                      color: _textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600)),
+              const SizedBox(height: 3),
+              Row(children: [
+                Icon(
+                  hasPhoto
+                      ? Icons.check_circle_outline_rounded
+                      : Icons.upload_outlined,
+                  size: 12,
+                  color: hasPhoto ? _green : _textMuted,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  hasPhoto ? 'Uploaded — tap to replace' : 'Tap to upload',
+                  style: TextStyle(
+                      color: hasPhoto ? _green : _textMuted, fontSize: 11),
+                ),
+              ]),
+            ]),
           ),
-          Icon(Icons.chevron_right_rounded,
-              color: _textMuted, size: 20),
+          Icon(Icons.chevron_right_rounded, color: _textMuted, size: 20),
         ]),
       ),
     );
@@ -2103,47 +2000,41 @@ class _DriverHomeState extends State<DriverHome>
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _border, width: 1),
       ),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              Icon(icon, color: dotColor, size: 16),
-              const SizedBox(width: 7),
-              Expanded(
-                child: Text(title,
-                    style: const TextStyle(
-                        color: _textPrimary,
-                        fontSize: 13,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(icon, color: dotColor, size: 16),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Text(title,
+                style: const TextStyle(
+                    color: _textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700)),
+          ),
+          GestureDetector(
+            onTap: onEdit,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: _o(_accent, 0.12),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: _o(_accent, 0.3)),
+              ),
+              child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.edit_outlined, color: _accent, size: 12),
+                SizedBox(width: 4),
+                Text('Edit',
+                    style: TextStyle(
+                        color: _accent,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700)),
-              ),
-              GestureDetector(
-                onTap: onEdit,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _o(_accent, 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: _o(_accent, 0.3)),
-                  ),
-                  child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.edit_outlined,
-                            color: _accent, size: 12),
-                        SizedBox(width: 4),
-                        Text('Edit',
-                            style: TextStyle(
-                                color: _accent,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700)),
-                      ]),
-                ),
-              ),
-            ]),
-            const SizedBox(height: 12),
-            child,
-          ]),
+              ]),
+            ),
+          ),
+        ]),
+        const SizedBox(height: 12),
+        child,
+      ]),
     );
   }
 
@@ -2152,8 +2043,7 @@ class _DriverHomeState extends State<DriverHome>
     required List<_EditField> fields,
   }) {
     final controllers = {
-      for (final f in fields)
-        f.key: TextEditingController(text: f.initialValue)
+      for (final f in fields) f.key: TextEditingController(text: f.initialValue)
     };
     final errors = <String, String?>{};
     bool saving = false;
@@ -2200,8 +2090,8 @@ class _DriverHomeState extends State<DriverHome>
       builder: (ctx) {
         return StatefulBuilder(builder: (ctx2, setSt) {
           return Padding(
-            padding: EdgeInsets.only(
-                bottom: MediaQuery.of(ctx2).viewInsets.bottom),
+            padding:
+                EdgeInsets.only(bottom: MediaQuery.of(ctx2).viewInsets.bottom),
             child: SingleChildScrollView(
               child: Container(
                 margin: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -2211,11 +2101,9 @@ class _DriverHomeState extends State<DriverHome>
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: _border, width: 1.5),
                 ),
-                child:
-                    Column(mainAxisSize: MainAxisSize.min, children: [
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
                   Row(children: [
-                    const Icon(Icons.edit_outlined,
-                        color: _accent, size: 18),
+                    const Icon(Icons.edit_outlined, color: _accent, size: 18),
                     const SizedBox(width: 8),
                     Text(title,
                         style: const TextStyle(
@@ -2225,8 +2113,8 @@ class _DriverHomeState extends State<DriverHome>
                     const Spacer(),
                     GestureDetector(
                       onTap: () => Navigator.pop(ctx2),
-                      child: const Icon(Icons.close,
-                          color: _textMuted, size: 20),
+                      child:
+                          const Icon(Icons.close, color: _textMuted, size: 20),
                     ),
                   ]),
                   const SizedBox(height: 20),
@@ -2268,9 +2156,8 @@ class _DriverHomeState extends State<DriverHome>
                                 hintStyle: const TextStyle(
                                     color: _textMuted, fontSize: 13),
                                 border: InputBorder.none,
-                                contentPadding:
-                                    const EdgeInsets.symmetric(
-                                        horizontal: 14, vertical: 13),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 13),
                               ),
                             ),
                           ),
@@ -2297,8 +2184,8 @@ class _DriverHomeState extends State<DriverHome>
                             bool hasErrors = false;
                             final newErrors = <String, String?>{};
                             for (final f in fields) {
-                              final err = validate(
-                                  f.key, controllers[f.key]!.text);
+                              final err =
+                                  validate(f.key, controllers[f.key]!.text);
                               if (err != null) {
                                 newErrors[f.key] = err;
                                 hasErrors = true;
@@ -2312,8 +2199,7 @@ class _DriverHomeState extends State<DriverHome>
                             setSt(() => saving = true);
                             final updates = {
                               for (final f in fields)
-                                f.key:
-                                    controllers[f.key]!.text.trim()
+                                f.key: controllers[f.key]!.text.trim()
                             };
                             final ok = await _updateProfile(updates);
                             if (ctx2.mounted) {
@@ -2328,8 +2214,7 @@ class _DriverHomeState extends State<DriverHome>
                           },
                     child: Container(
                       width: double.infinity,
-                      padding:
-                          const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(
                         color: saving ? _o(_accent, 0.5) : _accent,
                         borderRadius: BorderRadius.circular(12),
@@ -2348,13 +2233,11 @@ class _DriverHomeState extends State<DriverHome>
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2),
+                                    color: Colors.white, strokeWidth: 2),
                               ),
                             )
                           : const Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(Icons.save_outlined,
                                     color: Colors.white, size: 18),
@@ -2394,21 +2277,19 @@ class _DriverHomeState extends State<DriverHome>
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _border, width: 1),
       ),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              Icon(titleIcon, color: dotColor, size: 16),
-              const SizedBox(width: 7),
-              Text(title,
-                  style: const TextStyle(
-                      color: _textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700)),
-            ]),
-            const SizedBox(height: 12),
-            child,
-          ]),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(titleIcon, color: dotColor, size: 16),
+          const SizedBox(width: 7),
+          Text(title,
+              style: const TextStyle(
+                  color: _textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700)),
+        ]),
+        const SizedBox(height: 12),
+        child,
+      ]),
     );
   }
 
@@ -2423,8 +2304,7 @@ class _DriverHomeState extends State<DriverHome>
             Icon(icon, color: _textMuted, size: 14),
             const SizedBox(width: 6),
             Text(label,
-                style:
-                    const TextStyle(color: _textMuted, fontSize: 12)),
+                style: const TextStyle(color: _textMuted, fontSize: 12)),
           ]),
           Flexible(
             child: Text(value,
@@ -2466,9 +2346,7 @@ class _DriverHomeState extends State<DriverHome>
       backgroundColor: _o(_accent, 0.2),
       child: Text(initial,
           style: TextStyle(
-              color: _accent,
-              fontWeight: FontWeight.w800,
-              fontSize: fontSize)),
+              color: _accent, fontWeight: FontWeight.w800, fontSize: fontSize)),
     );
   }
 }
@@ -2531,8 +2409,7 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
     super.initState();
     _ctrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 350));
-    _scale =
-        CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack);
+    _scale = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack);
     _ctrl.forward();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
@@ -2574,13 +2451,10 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
               border: Border.all(color: _border, width: 1.5),
               boxShadow: [
                 BoxShadow(
-                    color: _o(_green, 0.15),
-                    blurRadius: 30,
-                    spreadRadius: 4),
+                    color: _o(_green, 0.15), blurRadius: 30, spreadRadius: 4),
               ],
             ),
-            child:
-                Column(mainAxisSize: MainAxisSize.min, children: [
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
               Row(children: [
                 _PulsingDot(color: _orange),
                 const SizedBox(width: 10),
@@ -2596,22 +2470,19 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
                 SizedBox(
                   width: 40,
                   height: 40,
-                  child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        CircularProgressIndicator(
-                          value: _countdown / 30,
-                          strokeWidth: 3,
-                          backgroundColor: _border,
-                          color: _countdown > 10 ? _green : _red,
-                        ),
-                        Text('$_countdown',
-                            style: TextStyle(
-                                color:
-                                    _countdown > 10 ? _green : _red,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700)),
-                      ]),
+                  child: Stack(alignment: Alignment.center, children: [
+                    CircularProgressIndicator(
+                      value: _countdown / 30,
+                      strokeWidth: 3,
+                      backgroundColor: _border,
+                      color: _countdown > 10 ? _green : _red,
+                    ),
+                    Text('$_countdown',
+                        style: TextStyle(
+                            color: _countdown > 10 ? _green : _red,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700)),
+                  ]),
                 ),
               ]),
               const SizedBox(height: 14),
@@ -2640,8 +2511,7 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
                           const Icon(Icons.straighten_outlined,
                               color: _textMuted, size: 12),
                           const SizedBox(width: 3),
-                          Text(
-                              '${req.distanceKm.toStringAsFixed(1)} km route',
+                          Text('${req.distanceKm.toStringAsFixed(1)} km route',
                               style: const TextStyle(
                                   color: _textMuted, fontSize: 12)),
                         ]),
@@ -2649,8 +2519,8 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: _o(_green, 0.12),
                     borderRadius: BorderRadius.circular(10),
@@ -2662,16 +2532,13 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
                             color: _green,
                             fontWeight: FontWeight.w900,
                             fontSize: 18)),
-                    Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.credit_card_outlined,
-                              color: _textMuted, size: 10),
-                          SizedBox(width: 2),
-                          Text('fare',
-                              style: TextStyle(
-                                  color: _textMuted, fontSize: 10)),
-                        ]),
+                    Row(mainAxisSize: MainAxisSize.min, children: const [
+                      Icon(Icons.credit_card_outlined,
+                          color: _textMuted, size: 10),
+                      SizedBox(width: 2),
+                      Text('fare',
+                          style: TextStyle(color: _textMuted, fontSize: 10)),
+                    ]),
                   ]),
                 ),
               ]),
@@ -2684,24 +2551,23 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
                   border: Border.all(color: _border),
                 ),
                 child: Column(children: [
-                  _routeLine(Icons.radio_button_checked, _green,
-                      'Pickup', req.pickupLabel),
+                  _routeLine(Icons.radio_button_checked, _green, 'Pickup',
+                      req.pickupLabel),
                   Padding(
                     padding: const EdgeInsets.only(left: 8),
                     child: Column(
                       children: List.generate(
                           3,
                           (_) => Container(
-                                margin: const EdgeInsets.symmetric(
-                                    vertical: 2),
+                                margin: const EdgeInsets.symmetric(vertical: 2),
                                 width: 1.5,
                                 height: 5,
                                 color: _border,
                               )),
                     ),
                   ),
-                  _routeLine(Icons.location_on_outlined, _red,
-                      'Dropoff', req.dropoffLabel),
+                  _routeLine(Icons.location_on_outlined, _red, 'Dropoff',
+                      req.dropoffLabel),
                 ]),
               ),
               const SizedBox(height: 14),
@@ -2710,8 +2576,7 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
                   child: GestureDetector(
                     onTap: widget.onDecline,
                     child: Container(
-                      padding:
-                          const EdgeInsets.symmetric(vertical: 13),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
                       decoration: BoxDecoration(
                         color: _o(_red, 0.1),
                         borderRadius: BorderRadius.circular(12),
@@ -2738,8 +2603,7 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
                   child: GestureDetector(
                     onTap: widget.onAccept,
                     child: Container(
-                      padding:
-                          const EdgeInsets.symmetric(vertical: 13),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
                       decoration: BoxDecoration(
                         color: _green,
                         borderRadius: BorderRadius.circular(12),
@@ -2774,25 +2638,19 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
     );
   }
 
-  Widget _routeLine(
-      IconData icon, Color color, String label, String sub) {
+  Widget _routeLine(IconData icon, Color color, String label, String sub) {
     return Row(children: [
       Icon(icon, color: color, size: 18),
       const SizedBox(width: 10),
       Expanded(
-        child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label,
-                  style: TextStyle(
-                      color: color,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600)),
-              Text(sub,
-                  style: const TextStyle(
-                      color: _textPrimary, fontSize: 12),
-                  overflow: TextOverflow.ellipsis),
-            ]),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(label,
+              style: TextStyle(
+                  color: color, fontSize: 10, fontWeight: FontWeight.w600)),
+          Text(sub,
+              style: const TextStyle(color: _textPrimary, fontSize: 12),
+              overflow: TextOverflow.ellipsis),
+        ]),
       ),
     ]);
   }
@@ -2817,11 +2675,11 @@ class _DriverMarkerState extends State<_DriverMarker>
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(
-        vsync: this, duration: const Duration(seconds: 1))
-      ..repeat(reverse: true);
-    _pulse = Tween(begin: 0.85, end: 1.15).animate(
-        CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+    _ctrl =
+        AnimationController(vsync: this, duration: const Duration(seconds: 1))
+          ..repeat(reverse: true);
+    _pulse = Tween(begin: 0.85, end: 1.15)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -2855,8 +2713,7 @@ class _DriverMarkerState extends State<_DriverMarker>
             ],
           ),
           child: const Center(
-            child: Icon(Icons.directions_car,
-                color: Colors.white, size: 24),
+            child: Icon(Icons.directions_car, color: Colors.white, size: 24),
           ),
         ),
       ),
@@ -2879,22 +2736,18 @@ class _RouteMarker extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(mainAxisSize: MainAxisSize.min, children: [
       Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(6),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 6),
+                color: Colors.black.withValues(alpha: 0.2), blurRadius: 6),
           ],
         ),
         child: Text(label,
             style: TextStyle(
-                color: color,
-                fontSize: 10,
-                fontWeight: FontWeight.w700)),
+                color: color, fontSize: 10, fontWeight: FontWeight.w700)),
       ),
       const SizedBox(height: 2),
       Icon(icon, color: color, size: 28),
