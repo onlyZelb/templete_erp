@@ -24,14 +24,22 @@ class RideController
             $data['destination']
         );
 
+        // ── FIX: resolve driver_id from the request ───────────────────────
+        $driverId = null;
+        if (!empty($data['driver_id'])) {
+            $driverId = (int) $data['driver_id'];
+        }
+        // ─────────────────────────────────────────────────────────────────
+
         $stmt = $this->db->prepare("
-            INSERT INTO rides (commuter_id, pickup_location, destination, fare, status)
-            VALUES (:commuter_id, :pickup, :destination, :fare, 'pending')
-            RETURNING id, commuter_id, pickup_location, destination, fare, status, created_at
+            INSERT INTO rides (commuter_id, driver_id, pickup_location, destination, fare, status)
+            VALUES (:commuter_id, :driver_id, :pickup, :destination, :fare, 'pending')
+            RETURNING id, commuter_id, driver_id, pickup_location, destination, fare, status, created_at
         ");
 
         $stmt->execute([
             'commuter_id' => $commuterId,
+            'driver_id'   => $driverId,      // ← now saved to DB
             'pickup'      => $data['pickup_location'],
             'destination' => $data['destination'],
             'fare'        => $fare,

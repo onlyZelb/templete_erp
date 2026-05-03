@@ -72,6 +72,9 @@ class _IC {
   static const save = Icons.save_outlined;
   static const chat = Icons.chat_bubble_outline_rounded;
   static const send = Icons.send_rounded;
+  static const star = Icons.star_rounded;
+  static const starOutline = Icons.star_outline_rounded;
+  static const tripCount = Icons.directions_car_outlined;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1091,13 +1094,25 @@ class _CommuterHomeState extends State<CommuterHome>
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  //  RIDE STATUS POLLING
+  //  RIDE STATUS POLLING — FIXED: clean state reset on completion/cancel
   // ══════════════════════════════════════════════════════════════════════
 
   void _startRideStatusPolling() {
     _rideStatusTimer?.cancel();
     _rideStatusTimer =
         Timer.periodic(const Duration(seconds: 3), (_) => _pollRideStatus());
+  }
+
+  /// Resets all active-ride state and navigates back to the Book a Ride tab
+  /// without any full page refresh — purely in-memory state update.
+  void _clearActiveRide() {
+    if (!mounted) return;
+    setState(() {
+      _activeBooking = null;
+      _activeBookingStatus = null;
+      _driverLiveLocation = null;
+      _tab = 0; // Switch back to Overview / Book a Ride tab
+    });
   }
 
   Future<void> _pollRideStatus() async {
@@ -1113,52 +1128,61 @@ class _CommuterHomeState extends State<CommuterHome>
       final newStatus = data['status']?.toString() ?? 'pending';
       final prevStatus = _activeBookingStatus;
 
-      if (mounted) {
-        setState(() {
-          _activeBookingStatus = newStatus;
-          _activeBooking = {..._activeBooking!, ...data};
-          if (data['driver_lat'] != null && data['driver_lng'] != null) {
-            _driverLiveLocation = LatLng(
-              (data['driver_lat'] as num).toDouble(),
-              (data['driver_lng'] as num).toDouble(),
-            );
-          }
-        });
+      if (!mounted) return;
 
-        if (prevStatus != newStatus) {
-          if (newStatus == 'accepted' || newStatus == 'ongoing') {
-            _showSnack('Driver accepted your ride! On the way…', _green);
-            if (_myLocation != null && _driverLiveLocation != null) {
-              final bounds =
-                  LatLngBounds.fromPoints([_myLocation!, _driverLiveLocation!]);
-              _mapController.fitCamera(CameraFit.bounds(
-                  bounds: bounds, padding: const EdgeInsets.all(60)));
-            }
-          } else if (newStatus == 'completed') {
-            // ── FIX: go back to tab 0 (Overview/Book a Ride) after completion ──
-            _showSnack(
-                'Ride completed! Thank you for riding with PasadaNow.', _green);
-            _rideStatusTimer?.cancel();
-            await _loadRides();
-            setState(() {
-              _activeBooking = null;
-              _activeBookingStatus = null;
-              _driverLiveLocation = null;
-              _tab = 0; // ← return to Overview tab
-            });
-          } else if (newStatus == 'cancelled') {
-            _showSnack('Ride was cancelled.', _red);
-            _rideStatusTimer?.cancel();
-            setState(() {
-              _activeBooking = null;
-              _activeBookingStatus = null;
-              _driverLiveLocation = null;
-              _tab = 0; // ← return to Overview tab on cancel too
-            });
+      // Update live data first (driver location, booking fields)
+      setState(() {
+        _activeBookingStatus = newStatus;
+        _activeBooking = {..._activeBooking!, ...data};
+        if (data['driver_lat'] != null && data['driver_lng'] != null) {
+          _driverLiveLocation = LatLng(
+            (data['driver_lat'] as num).toDouble(),
+            (data['driver_lng'] as num).toDouble(),
+          );
+        }
+      });
+
+      // Only act on status *transitions*
+      if (prevStatus != newStatus) {
+        if (newStatus == 'accepted' || newStatus == 'ongoing') {
+          _showSnack('Driver accepted your ride! On the way…', _green);
+          if (_myLocation != null && _driverLiveLocation != null) {
+            final bounds =
+                LatLngBounds.fromPoints([_myLocation!, _driverLiveLocation!]);
+            _mapController.fitCamera(CameraFit.bounds(
+                bounds: bounds, padding: const EdgeInsets.all(60)));
           }
+        } else if (newStatus == 'completed') {
+          // ── Stop polling immediately ──────────────────────────────────
+          _rideStatusTimer?.cancel();
+          _rideStatusTimer = null;
+
+          // ── Refresh ride history in the background ────────────────────
+          _loadRides(); // fire-and-forget; no await so UI isn't blocked
+
+          // ── Show completion snack, then seamlessly go back to booking ─
+          _showSnack(
+              'Ride completed! Thank you for riding with PasadaNow.', _green);
+
+          // Small delay so the snack is visible before the UI switches
+          Future.delayed(const Duration(milliseconds: 600), () {
+            _clearActiveRide();
+          });
+        } else if (newStatus == 'cancelled') {
+          // ── Stop polling immediately ──────────────────────────────────
+          _rideStatusTimer?.cancel();
+          _rideStatusTimer = null;
+
+          _showSnack('Ride was cancelled.', _red);
+
+          Future.delayed(const Duration(milliseconds: 400), () {
+            _clearActiveRide();
+          });
         }
       }
-    } catch (_) {}
+    } catch (_) {
+      // Network error — keep polling, do nothing
+    }
   }
 
   void _cancelActiveRide() async {
@@ -1168,16 +1192,13 @@ class _CommuterHomeState extends State<CommuterHome>
       await dio.patch('/rides/${_activeBooking!['id']}/cancel');
     } catch (_) {}
     _rideStatusTimer?.cancel();
-    setState(() {
-      _activeBooking = null;
-      _activeBookingStatus = null;
-      _driverLiveLocation = null;
-      _tab = 0; // ← return to Overview tab after manual cancel
-    });
+    _rideStatusTimer = null;
     _showSnack('Ride cancelled.', _orange);
+    _clearActiveRide(); // reuse the same clean reset helper
   }
 
   void _showSnack(String msg, Color color) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg, style: const TextStyle(color: Colors.white)),
       backgroundColor: color,
@@ -2361,12 +2382,10 @@ class _CommuterHomeState extends State<CommuterHome>
         const Text('Route & fare auto-calculates as you type',
             style: TextStyle(
                 color: _textSub, fontSize: 10, fontStyle: FontStyle.italic)),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
 
         // ── REDESIGNED DRIVER SELECTOR ─────────────────────────────────
-        _fieldLabel('SELECT DRIVER (ONLINE ONLY)'),
-        const SizedBox(height: 8),
-        _driverSelector(),
+        _driverSelectorSection(),
         // ─────────────────────────────────────────────────────────────
 
         if (_fare != null) ...[
@@ -2446,81 +2465,251 @@ class _CommuterHomeState extends State<CommuterHome>
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  //  REDESIGNED DRIVER SELECTOR
+  //  REDESIGNED DRIVER SELECTOR SECTION
   // ══════════════════════════════════════════════════════════════════════
 
-  Widget _driverSelector() {
-    // Loading state
-    if (_driversLoading && _nearbyDrivers.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-        decoration: BoxDecoration(
-          color: _navyLight,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _cardBorder),
-        ),
-        child: Row(children: [
-          const SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(color: _accent, strokeWidth: 2),
+  Widget _driverSelectorSection() {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      // ── Section Header ─────────────────────────────────────────────
+      Row(children: [
+        Container(
+          width: 3,
+          height: 14,
+          decoration: BoxDecoration(
+            color: _accent,
+            borderRadius: BorderRadius.circular(2),
           ),
-          const SizedBox(width: 12),
-          const Text('Loading online drivers…',
-              style: TextStyle(color: _textSub, fontSize: 12)),
-        ]),
-      );
+        ),
+        const SizedBox(width: 8),
+        const Text(
+          'SELECT DRIVER',
+          style: TextStyle(
+            color: _textSub,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.0,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: _o(_green, 0.12),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: _o(_green, 0.25)),
+          ),
+          child: const Text(
+            'ONLINE ONLY',
+            style: TextStyle(
+              color: _green,
+              fontSize: 8,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+            ),
+          ),
+        ),
+        const Spacer(),
+        GestureDetector(
+          onTap: _loadNearbyDrivers,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: _o(_accent, 0.08),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: _o(_accent, 0.2)),
+            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(
+                _IC.refresh,
+                color: _driversLoading ? _textSub : _accent,
+                size: 11,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                _driversLoading ? 'Loading…' : 'Refresh',
+                style: TextStyle(
+                  color: _driversLoading ? _textSub : _accent,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ]),
+          ),
+        ),
+      ]),
+      const SizedBox(height: 10),
+
+      // ── Selected driver summary banner (if one is selected) ────────
+      if (_selectedDriverId != null) ...[
+        _selectedDriverBanner(),
+        const SizedBox(height: 8),
+      ],
+
+      // ── Driver list ────────────────────────────────────────────────
+      _driverListBody(),
+    ]);
+  }
+
+  Widget _selectedDriverBanner() {
+    final d = _nearbyDrivers.firstWhere(
+      (d) => d['id'] == _selectedDriverId,
+      orElse: () => {},
+    );
+    if (d.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [_o(_accent, 0.15), _o(_green, 0.08)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _o(_accent, 0.5), width: 1.5),
+      ),
+      child: Row(children: [
+        Icon(_IC.check, color: _green, size: 14),
+        const SizedBox(width: 8),
+        Expanded(
+          child: RichText(
+            text: TextSpan(children: [
+              const TextSpan(
+                text: 'Selected: ',
+                style: TextStyle(color: _textSub, fontSize: 11),
+              ),
+              TextSpan(
+                text: d['name'] as String? ?? '',
+                style: const TextStyle(
+                  color: _textPrim,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ]),
+          ),
+        ),
+        GestureDetector(
+          onTap: () => setState(() {
+            _selectedDriverId = null;
+            _selectedDriver = null;
+          }),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: _o(_red, 0.1),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: _o(_red, 0.25)),
+            ),
+            child: const Text(
+              'Clear',
+              style: TextStyle(
+                  color: _red, fontSize: 10, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _driverListBody() {
+    // Loading skeleton
+    if (_driversLoading && _nearbyDrivers.isEmpty) {
+      return Column(
+          children: List.generate(
+        2,
+        (_) => Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          height: 68,
+          decoration: BoxDecoration(
+            color: _navyLight,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _cardBorder),
+          ),
+          child: Row(children: [
+            const SizedBox(width: 14),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: _o(_accent, 0.06),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                    width: 100,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: _o(_textSub, 0.15),
+                      borderRadius: BorderRadius.circular(4),
+                    )),
+                const SizedBox(height: 6),
+                Container(
+                    width: 60,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: _o(_textSub, 0.08),
+                      borderRadius: BorderRadius.circular(4),
+                    )),
+              ],
+            ),
+          ]),
+        ),
+      ));
     }
 
     // Empty state
     if (_nearbyDrivers.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
         decoration: BoxDecoration(
           color: _navyLight,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: _cardBorder),
         ),
-        child: Row(children: [
+        child: Column(children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              color: _o(_textSub, 0.1),
+              color: _o(_textSub, 0.08),
               shape: BoxShape.circle,
             ),
-            child: Icon(_IC.tricycle, color: _textSub, size: 18),
+            child: Icon(_IC.tricycle, color: _o(_textSub, 0.5), size: 22),
           ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('No drivers online',
-                  style: TextStyle(
-                      color: _textPrim,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600)),
-              SizedBox(height: 2),
-              Text('Check back in a moment',
-                  style: TextStyle(color: _textSub, fontSize: 11)),
-            ]),
+          const SizedBox(height: 10),
+          const Text(
+            'No drivers online',
+            style: TextStyle(
+                color: _textPrim, fontSize: 13, fontWeight: FontWeight.w600),
           ),
+          const SizedBox(height: 4),
+          const Text(
+            'Pull to refresh or wait a moment',
+            style: TextStyle(color: _textSub, fontSize: 11),
+          ),
+          const SizedBox(height: 12),
           GestureDetector(
             onTap: _loadNearbyDrivers,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: _o(_accent, 0.12),
+                color: _o(_accent, 0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: _o(_accent, 0.3)),
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(_IC.refresh, color: _accent, size: 12),
-                const SizedBox(width: 4),
-                const Text('Refresh',
+                Icon(_IC.refresh, color: _accent, size: 13),
+                const SizedBox(width: 6),
+                const Text('Check Again',
                     style: TextStyle(
                         color: _accent,
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600)),
               ]),
             ),
@@ -2529,74 +2718,41 @@ class _CommuterHomeState extends State<CommuterHome>
       );
     }
 
-    // Driver cards list (scrollable horizontally if many, else stacked)
-    return Column(children: [
-      // Header count + refresh
-      Row(children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: _o(_green, 0.12),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: _o(_green, 0.25)),
-          ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            _PulseDot(color: _green),
-            const SizedBox(width: 5),
-            Text(
-              '${_nearbyDrivers.length} online',
-              style: const TextStyle(
-                  color: _green, fontSize: 10, fontWeight: FontWeight.w700),
-            ),
-          ]),
-        ),
-        const Spacer(),
-        GestureDetector(
-          onTap: _loadNearbyDrivers,
-          child: Row(children: [
-            Icon(_IC.refresh,
-                color: _driversLoading ? _textSub : _accent, size: 13),
-            const SizedBox(width: 4),
-            Text(
-              _driversLoading ? 'Refreshing…' : 'Refresh',
-              style: TextStyle(
-                  color: _driversLoading ? _textSub : _accent,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600),
-            ),
-          ]),
-        ),
-      ]),
-      const SizedBox(height: 8),
-      // Driver tile list
-      ...(_nearbyDrivers.map((d) => _driverTile(d))),
-    ]);
+    // Driver cards
+    return Column(
+      children: _nearbyDrivers.map((d) => _driverCard(d)).toList(),
+    );
   }
 
-  Widget _driverTile(Map<String, dynamic> d) {
+  Widget _driverCard(Map<String, dynamic> d) {
     final id = d['id'] as String;
     final isSelected = _selectedDriverId == id;
+    final name = d['name'] as String? ?? '';
+    final plate = d['plate'] as String? ?? '';
+    final rating = d['rating'] as String? ?? '—';
+    final trips = d['trips'] as String? ?? '—';
+    final initials = d['initials'] as String? ?? 'DR';
+
+    // Parse rating to show stars
+    final ratingVal = double.tryParse(rating) ?? 0.0;
+    final fullStars = ratingVal.floor().clamp(0, 5);
 
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          if (isSelected) {
-            // deselect
-            _selectedDriverId = null;
-            _selectedDriver = null;
-          } else {
-            _selectedDriverId = id;
-            _selectedDriver = d['name'] as String?;
-          }
-        });
-      },
+      onTap: () => setState(() {
+        if (isSelected) {
+          _selectedDriverId = null;
+          _selectedDriver = null;
+        } else {
+          _selectedDriverId = id;
+          _selectedDriver = name;
+        }
+      }),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
         margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? _o(_accent, 0.1) : _navyLight,
+          color: isSelected ? _o(_accent, 0.08) : _navyLight,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? _accent : _cardBorder,
@@ -2605,102 +2761,193 @@ class _CommuterHomeState extends State<CommuterHome>
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                      color: _o(_accent, 0.15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2))
+                    color: _o(_accent, 0.12),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
+                  )
                 ]
               : null,
         ),
-        child: Row(children: [
-          // Avatar
-          Stack(children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor:
-                  isSelected ? _o(_accent, 0.25) : _o(_accent, 0.1),
-              child: Text(
-                d['initials'] as String,
-                style: TextStyle(
-                  color: isSelected ? _accent : _o(_accent, 0.7),
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            // Online dot
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: Container(
-                width: 10,
-                height: 10,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+            // ── Avatar with online indicator ─────────────────────────
+            Stack(children: [
+              Container(
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: _green,
                   shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: isSelected
+                        ? [_o(_accent, 0.35), _o(_accent, 0.15)]
+                        : [_o(_accent, 0.18), _o(_accent, 0.06)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   border: Border.all(
-                      color: isSelected ? _o(_navy, 0.6) : _navyLight,
-                      width: 1.5),
+                    color: isSelected ? _o(_accent, 0.6) : _o(_accent, 0.2),
+                    width: 1.5,
+                  ),
                 ),
-              ),
-            ),
-          ]),
-          const SizedBox(width: 12),
-          // Info
-          Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(
-                d['name'] as String,
-                style: TextStyle(
-                  color: isSelected ? _textPrim : _textPrim,
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                d['plate'] as String,
-                style: const TextStyle(color: _textSub, fontSize: 10),
-              ),
-            ]),
-          ),
-          // Right side: rating + selection indicator
-          Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (d['rating'] != '—')
-                  Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.star_rounded, color: _orange, size: 12),
-                    const SizedBox(width: 2),
-                    Text(
-                      d['rating'] as String,
-                      style: const TextStyle(
-                          color: _orange,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700),
-                    ),
-                  ]),
-                const SizedBox(height: 4),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  width: 22,
-                  height: 22,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isSelected ? _accent : Colors.transparent,
-                    border: Border.all(
-                      color: isSelected ? _accent : _o(_textSub, 0.4),
-                      width: 1.5,
+                child: Center(
+                  child: Text(
+                    initials,
+                    style: TextStyle(
+                      color: isSelected ? _accent : _o(_accent, 0.7),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
                     ),
                   ),
-                  child: isSelected
-                      ? const Icon(Icons.check_rounded,
-                          color: Colors.white, size: 13)
-                      : null,
                 ),
-              ]),
-        ]),
+              ),
+              Positioned(
+                right: 1,
+                bottom: 1,
+                child: Container(
+                  width: 11,
+                  height: 11,
+                  decoration: BoxDecoration(
+                    color: _green,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: _navyLight, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                          color: _o(_green, 0.5),
+                          blurRadius: 4,
+                          spreadRadius: 1),
+                    ],
+                  ),
+                ),
+              ),
+            ]),
+            const SizedBox(width: 12),
+
+            // ── Driver info ──────────────────────────────────────────
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: TextStyle(
+                          color: _textPrim,
+                          fontSize: 13,
+                          fontWeight:
+                              isSelected ? FontWeight.w800 : FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (isSelected)
+                      Container(
+                        margin: const EdgeInsets.only(left: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: _o(_accent, 0.2),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: _o(_accent, 0.4)),
+                        ),
+                        child: const Text(
+                          'SELECTED',
+                          style: TextStyle(
+                            color: _accent,
+                            fontSize: 7,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                  ]),
+                  const SizedBox(height: 3),
+                  Row(children: [
+                    Icon(_IC.tricycle, color: _textSub, size: 11),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        plate,
+                        style: const TextStyle(color: _textSub, fontSize: 10),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ]),
+                  const SizedBox(height: 5),
+                  Row(children: [
+                    // Star rating
+                    ...List.generate(
+                      5,
+                      (i) => Icon(
+                        i < fullStars ? _IC.star : _IC.starOutline,
+                        color: i < fullStars ? _orange : _o(_textSub, 0.4),
+                        size: 11,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      rating != '—' ? rating : 'No rating',
+                      style: TextStyle(
+                        color: rating != '—' ? _orange : _textSub,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (trips != '—') ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 3,
+                        height: 3,
+                        decoration: const BoxDecoration(
+                          color: _textSub,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(_IC.tripCount, color: _textSub, size: 10),
+                      const SizedBox(width: 3),
+                      Text(
+                        '$trips trips',
+                        style: const TextStyle(color: _textSub, fontSize: 10),
+                      ),
+                    ],
+                  ]),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+
+            // ── Selection toggle ─────────────────────────────────────
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected ? _accent : Colors.transparent,
+                border: Border.all(
+                  color: isSelected ? _accent : _o(_textSub, 0.35),
+                  width: 1.5,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: _o(_accent, 0.4),
+                          blurRadius: 8,
+                          spreadRadius: 1,
+                        )
+                      ]
+                    : null,
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check_rounded,
+                      color: Colors.white, size: 14)
+                  : null,
+            ),
+          ]),
+        ),
       ),
     );
   }

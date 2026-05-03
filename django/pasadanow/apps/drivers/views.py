@@ -193,12 +193,28 @@ class CompleteRideView(APIView):
         return Response(RideSerializer(ride).data)
 
 
+class DeclineRideView(APIView):
+    def patch(self, request, ride_id):
+        driver = get_driver(get_username(request))
+        try:
+            # Only allow declining a ride that was assigned to this driver
+            ride = Ride.objects.get(id=ride_id, driver_id=driver.id, status='pending')
+        except Ride.DoesNotExist:
+            raise NotFound('Ride not found or not assigned to you')
+        # Clear the driver assignment so another driver can be selected
+        ride.driver = None
+        ride.save(update_fields=['driver_id', 'updated_at'])
+        return Response({'detail': 'Ride declined.'})
+
+
 class PendingRideView(APIView):
     def get(self, request):
-        get_driver(get_username(request))
+        # ── FIX: only return rides assigned to THIS driver ────────────────
+        driver = get_driver(get_username(request))
         try:
             ride = Ride.objects.filter(
-                status='pending', driver__isnull=True
+                status='pending',
+                driver_id=driver.id,        # ← only rides for this driver
             ).order_by('created_at').first()
             if not ride:
                 return Response({})
