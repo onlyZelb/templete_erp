@@ -519,16 +519,17 @@ class _CommuterHomeState extends State<CommuterHome>
   String? _activeBookingStatus;
   LatLng? _driverLiveLocation;
 
+  bool _rideJustCompleted = false;
+  Map<String, dynamic>? _completedRideSnapshot;
+
   List<Map<String, dynamic>> _nearbyDrivers = [];
   bool _driversLoading = false;
   Timer? _driversRefreshTimer;
 
-  // ── Full commuter profile ──────────────────────────────────────────────
   CommuterProfile? _profile;
   bool _profileLoading = false;
   Timer? _profileRefreshTimer;
 
-  // ── Computed stats ─────────────────────────────────────────────────────
   int get _totalBookings => _rides.length;
   int get _onlineDrivers => _nearbyDrivers.length;
   String get _lastFare =>
@@ -545,7 +546,6 @@ class _CommuterHomeState extends State<CommuterHome>
     return '₱${computed.toStringAsFixed(2)}';
   }
 
-  // ── Time-aware greeting ────────────────────────────────────────────────
   String get _timeGreeting {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good morning';
@@ -1064,6 +1064,8 @@ class _CommuterHomeState extends State<CommuterHome>
         _activeBooking =
             rideData is Map ? Map<String, dynamic>.from(rideData) : null;
         _activeBookingStatus = 'pending';
+        _rideJustCompleted = false;
+        _completedRideSnapshot = null;
       });
 
       _pickup.clear();
@@ -1094,7 +1096,7 @@ class _CommuterHomeState extends State<CommuterHome>
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  //  RIDE STATUS POLLING — FIXED: clean state reset on completion/cancel
+  //  RIDE STATUS POLLING
   // ══════════════════════════════════════════════════════════════════════
 
   void _startRideStatusPolling() {
@@ -1103,15 +1105,15 @@ class _CommuterHomeState extends State<CommuterHome>
         Timer.periodic(const Duration(seconds: 3), (_) => _pollRideStatus());
   }
 
-  /// Resets all active-ride state and navigates back to the Book a Ride tab
-  /// without any full page refresh — purely in-memory state update.
   void _clearActiveRide() {
+    _rideStatusTimer?.cancel();
+    _rideStatusTimer = null;
     if (!mounted) return;
     setState(() {
       _activeBooking = null;
       _activeBookingStatus = null;
       _driverLiveLocation = null;
-      _tab = 0; // Switch back to Overview / Book a Ride tab
+      _tab = 0;
     });
   }
 
@@ -1130,7 +1132,6 @@ class _CommuterHomeState extends State<CommuterHome>
 
       if (!mounted) return;
 
-      // Update live data first (driver location, booking fields)
       setState(() {
         _activeBookingStatus = newStatus;
         _activeBooking = {..._activeBooking!, ...data};
@@ -1142,7 +1143,6 @@ class _CommuterHomeState extends State<CommuterHome>
         }
       });
 
-      // Only act on status *transitions*
       if (prevStatus != newStatus) {
         if (newStatus == 'accepted' || newStatus == 'ongoing') {
           _showSnack('Driver accepted your ride! On the way…', _green);
@@ -1153,23 +1153,26 @@ class _CommuterHomeState extends State<CommuterHome>
                 bounds: bounds, padding: const EdgeInsets.all(60)));
           }
         } else if (newStatus == 'completed') {
-          // ── Stop polling immediately ──────────────────────────────────
           _rideStatusTimer?.cancel();
           _rideStatusTimer = null;
 
-          // ── Refresh ride history in the background ────────────────────
-          _loadRides(); // fire-and-forget; no await so UI isn't blocked
+          // Snapshot BEFORE clearing — FIX: set _rideJustCompleted first
+          final snapshot = Map<String, dynamic>.from(_activeBooking!);
 
-          // ── Show completion snack, then seamlessly go back to booking ─
+          setState(() {
+            // ✅ FIX 1: Set completion flag BEFORE clearing activeBooking
+            _rideJustCompleted = true;
+            _completedRideSnapshot = snapshot;
+            _activeBooking = null;
+            _activeBookingStatus = null;
+            _driverLiveLocation = null;
+            _tab = 0;
+          });
+
+          _loadRides();
           _showSnack(
               'Ride completed! Thank you for riding with PasadaNow.', _green);
-
-          // Small delay so the snack is visible before the UI switches
-          Future.delayed(const Duration(milliseconds: 600), () {
-            _clearActiveRide();
-          });
         } else if (newStatus == 'cancelled') {
-          // ── Stop polling immediately ──────────────────────────────────
           _rideStatusTimer?.cancel();
           _rideStatusTimer = null;
 
@@ -1180,9 +1183,7 @@ class _CommuterHomeState extends State<CommuterHome>
           });
         }
       }
-    } catch (_) {
-      // Network error — keep polling, do nothing
-    }
+    } catch (_) {}
   }
 
   void _cancelActiveRide() async {
@@ -1191,10 +1192,22 @@ class _CommuterHomeState extends State<CommuterHome>
       final dio = ApiClient.build(ApiConstants.phpBase);
       await dio.patch('/rides/${_activeBooking!['id']}/cancel');
     } catch (_) {}
-    _rideStatusTimer?.cancel();
-    _rideStatusTimer = null;
     _showSnack('Ride cancelled.', _orange);
-    _clearActiveRide(); // reuse the same clean reset helper
+    _clearActiveRide();
+  }
+
+  // ✅ FIX 3: _dismissCompletionCard also clears route state for a clean booking form
+  void _dismissCompletionCard() {
+    setState(() {
+      _rideJustCompleted = false;
+      _completedRideSnapshot = null;
+      _routePoints = [];
+      _pickupLatLng = null;
+      _destLatLng = null;
+      _routeDistKm = null;
+      _routeDurationMin = null;
+      _fare = null;
+    });
   }
 
   void _showSnack(String msg, Color color) {
@@ -1555,7 +1568,9 @@ class _CommuterHomeState extends State<CommuterHome>
   Widget _buildDashboard(AuthProvider auth) {
     return SingleChildScrollView(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        if (_activeBooking != null) _buildActiveRideBanner(),
+        // ✅ FIX 2: Suppress active ride banner when showing completion card
+        if (_activeBooking != null && !_rideJustCompleted)
+          _buildActiveRideBanner(),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
           child: Row(children: [
@@ -1596,7 +1611,14 @@ class _CommuterHomeState extends State<CommuterHome>
         ),
         _mapSection(),
         if (_routeDistKm != null) _fareMetricsPanel(),
-        if (_activeBooking == null)
+
+        // ── Show completion card OR active ride detail OR booking form ──
+        if (_rideJustCompleted && _completedRideSnapshot != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            child: _rideCompletionCard(_completedRideSnapshot!),
+          )
+        else if (_activeBooking == null)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
             child: _bookingCard(),
@@ -1606,6 +1628,7 @@ class _CommuterHomeState extends State<CommuterHome>
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
             child: _activeRideDetailCard(auth),
           ),
+
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
           child: _nearestDriversCard(),
@@ -1711,7 +1734,159 @@ class _CommuterHomeState extends State<CommuterHome>
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  //  ACTIVE RIDE DETAIL CARD — with ChatWidget
+  //  RIDE COMPLETION CARD
+  // ══════════════════════════════════════════════════════════════════════
+
+  Widget _rideCompletionCard(Map<String, dynamic> ride) {
+    final fareStr = '₱${ride['fare'] ?? '—'}';
+    final from = ride['pickup_location']?.toString() ?? '—';
+    final to = ride['destination']?.toString() ?? '—';
+    final driver = ride['driver']?.toString();
+    final distKm = ride['distance_km']?.toString();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _o(_green, 0.5), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: _o(_green, 0.08),
+            blurRadius: 20,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: _o(_green, 0.15),
+              shape: BoxShape.circle,
+              border: Border.all(color: _o(_green, 0.4), width: 1.5),
+            ),
+            child: const Icon(_IC.check, color: _green, size: 24),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text(
+                'Ride Completed!',
+                style: TextStyle(
+                  color: _green,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'Thank you for riding with PasadaNow',
+                style: TextStyle(color: _textSub, fontSize: 11),
+              ),
+            ]),
+          ),
+        ]),
+        const SizedBox(height: 18),
+        const Divider(color: _cardBorder, height: 1),
+        const SizedBox(height: 16),
+        _detailRow(_IC.pickup, 'From', from),
+        const SizedBox(height: 10),
+        _detailRow(_IC.destination, 'To', to),
+        const SizedBox(height: 10),
+        _detailRow(_IC.fare, 'Fare Paid', fareStr),
+        if (driver != null) ...[
+          const SizedBox(height: 10),
+          _detailRow(_IC.driver, 'Driver', driver),
+        ],
+        if (distKm != null && distKm != 'null') ...[
+          const SizedBox(height: 10),
+          _detailRow(_IC.distance, 'Distance', '$distKm km'),
+        ],
+        const SizedBox(height: 20),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [_o(_green, 0.18), _o(_green, 0.08)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: _o(_green, 0.35)),
+          ),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(_IC.wallet, color: _green, size: 18),
+            const SizedBox(width: 10),
+            Text(
+              fareStr,
+              style: const TextStyle(
+                color: _green,
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'total fare',
+              style: TextStyle(color: _textSub, fontSize: 12),
+            ),
+          ]),
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: _dismissCompletionCard,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _accent,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
+              shadowColor: Colors.transparent,
+            ),
+            icon: const Icon(_IC.tricycle, size: 18),
+            label: const Text(
+              'Go back to Book a Ride',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () {
+              _dismissCompletionCard();
+              setState(() => _tab = 1);
+            },
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _textSub,
+              side: BorderSide(color: _o(_textSub, 0.3)),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            icon: const Icon(_IC.history, size: 16),
+            label: const Text(
+              'View Trip History',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  //  ACTIVE RIDE DETAIL CARD
   // ══════════════════════════════════════════════════════════════════════
 
   Widget _activeRideDetailCard(AuthProvider auth) {
@@ -1763,7 +1938,6 @@ class _CommuterHomeState extends State<CommuterHome>
             ),
           ),
         ],
-        // ── Chat Widget ───────────────────────────────────────────────
         const SizedBox(height: 16),
         SizedBox(
           height: 300,
@@ -2383,11 +2557,7 @@ class _CommuterHomeState extends State<CommuterHome>
             style: TextStyle(
                 color: _textSub, fontSize: 10, fontStyle: FontStyle.italic)),
         const SizedBox(height: 20),
-
-        // ── REDESIGNED DRIVER SELECTOR ─────────────────────────────────
         _driverSelectorSection(),
-        // ─────────────────────────────────────────────────────────────
-
         if (_fare != null) ...[
           const SizedBox(height: 12),
           Container(
@@ -2465,12 +2635,11 @@ class _CommuterHomeState extends State<CommuterHome>
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  //  REDESIGNED DRIVER SELECTOR SECTION
+  //  DRIVER SELECTOR
   // ══════════════════════════════════════════════════════════════════════
 
   Widget _driverSelectorSection() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      // ── Section Header ─────────────────────────────────────────────
       Row(children: [
         Container(
           width: 3,
@@ -2538,14 +2707,10 @@ class _CommuterHomeState extends State<CommuterHome>
         ),
       ]),
       const SizedBox(height: 10),
-
-      // ── Selected driver summary banner (if one is selected) ────────
       if (_selectedDriverId != null) ...[
         _selectedDriverBanner(),
         const SizedBox(height: 8),
       ],
-
-      // ── Driver list ────────────────────────────────────────────────
       _driverListBody(),
     ]);
   }
@@ -2613,7 +2778,6 @@ class _CommuterHomeState extends State<CommuterHome>
   }
 
   Widget _driverListBody() {
-    // Loading skeleton
     if (_driversLoading && _nearbyDrivers.isEmpty) {
       return Column(
           children: List.generate(
@@ -2663,7 +2827,6 @@ class _CommuterHomeState extends State<CommuterHome>
       ));
     }
 
-    // Empty state
     if (_nearbyDrivers.isEmpty) {
       return Container(
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
@@ -2718,7 +2881,6 @@ class _CommuterHomeState extends State<CommuterHome>
       );
     }
 
-    // Driver cards
     return Column(
       children: _nearbyDrivers.map((d) => _driverCard(d)).toList(),
     );
@@ -2733,7 +2895,6 @@ class _CommuterHomeState extends State<CommuterHome>
     final trips = d['trips'] as String? ?? '—';
     final initials = d['initials'] as String? ?? 'DR';
 
-    // Parse rating to show stars
     final ratingVal = double.tryParse(rating) ?? 0.0;
     final fullStars = ratingVal.floor().clamp(0, 5);
 
@@ -2771,7 +2932,6 @@ class _CommuterHomeState extends State<CommuterHome>
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-            // ── Avatar with online indicator ─────────────────────────
             Stack(children: [
               Container(
                 width: 44,
@@ -2823,8 +2983,6 @@ class _CommuterHomeState extends State<CommuterHome>
               ),
             ]),
             const SizedBox(width: 12),
-
-            // ── Driver info ──────────────────────────────────────────
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2877,7 +3035,6 @@ class _CommuterHomeState extends State<CommuterHome>
                   ]),
                   const SizedBox(height: 5),
                   Row(children: [
-                    // Star rating
                     ...List.generate(
                       5,
                       (i) => Icon(
@@ -2918,8 +3075,6 @@ class _CommuterHomeState extends State<CommuterHome>
               ),
             ),
             const SizedBox(width: 10),
-
-            // ── Selection toggle ─────────────────────────────────────
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: 26,

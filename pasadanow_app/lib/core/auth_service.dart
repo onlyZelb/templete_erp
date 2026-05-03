@@ -102,18 +102,28 @@ class AuthService {
     }
   }
 
-  // ── Logout ───────────────────────────────────────────────────────────────
-  Future<void> logout() async {
+// ── Logout ───────────────────────────────────────────────────────────────
+  Future<void> logout({String? role}) async {
     try {
+      // If driver, set offline before logging out
+      if (role == 'driver') {
+        final token = await getToken();
+        if (token != null) {
+          final dio = Dio(BaseOptions(baseUrl: ApiConstants.phpBase));
+          await dio.patch(
+            '/drivers/me/status',
+            data: {'is_online': false, 'lat': null, 'lng': null},
+            options: Options(headers: {'Authorization': 'Bearer $token'}),
+          );
+        }
+      }
       await _dio.post('/api/auth/logout');
     } catch (_) {
-      // Ignore network errors on logout
+      // Ignore errors — logout must always complete
     } finally {
       try {
         await _storage.deleteAll();
-      } catch (_) {
-        // Ignore storage errors on web
-      }
+      } catch (_) {}
     }
   }
 
