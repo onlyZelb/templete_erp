@@ -19,12 +19,14 @@ class RideController
 
         $commuterId = $this->getCommuterId($user->sub);
 
-        $fare = $this->computeFare(
-            $data['pickup_location'],
-            $data['destination']
-        );
+        // ── FIX: use the fare/distance sent by the Flutter app ────────────
+        $distanceKm = isset($data['distance_km']) ? (float) $data['distance_km'] : 0.0;
+        $fare = ($distanceKm > 0)
+            ? $this->computeFare($distanceKm)
+            : (float) ($data['fare'] ?? 25.50);
+        // ─────────────────────────────────────────────────────────────────
 
-        // ── FIX: resolve driver_id from the request ───────────────────────
+        // ── resolve driver_id from the request ────────────────────────────
         $driverId = null;
         if (!empty($data['driver_id'])) {
             $driverId = (int) $data['driver_id'];
@@ -32,17 +34,18 @@ class RideController
         // ─────────────────────────────────────────────────────────────────
 
         $stmt = $this->db->prepare("
-            INSERT INTO rides (commuter_id, driver_id, pickup_location, destination, fare, status)
-            VALUES (:commuter_id, :driver_id, :pickup, :destination, :fare, 'pending')
-            RETURNING id, commuter_id, driver_id, pickup_location, destination, fare, status, created_at
+            INSERT INTO rides (commuter_id, driver_id, pickup_location, destination, fare, distance_km, status)
+            VALUES (:commuter_id, :driver_id, :pickup, :destination, :fare, :distance_km, 'pending')
+            RETURNING id, commuter_id, driver_id, pickup_location, destination, fare, distance_km, status, created_at
         ");
 
         $stmt->execute([
             'commuter_id' => $commuterId,
-            'driver_id'   => $driverId,      // ← now saved to DB
+            'driver_id'   => $driverId,
             'pickup'      => $data['pickup_location'],
             'destination' => $data['destination'],
             'fare'        => $fare,
+            'distance_km' => $distanceKm,
         ]);
 
         $ride = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -87,9 +90,8 @@ class RideController
 
     public function fareEstimate(): void
     {
-        $pickup      = $_GET['pickup'] ?? '';
-        $destination = $_GET['destination'] ?? '';
-        $fare        = $this->computeFare($pickup, $destination);
+        $distanceKm  = isset($_GET['distance_km']) ? (float) $_GET['distance_km'] : 0.0;
+        $fare        = $this->computeFare($distanceKm);
         echo json_encode(['fare' => $fare]);
     }
 
@@ -230,11 +232,11 @@ class RideController
         return (int) $commuter['id'];
     }
 
-    private function computeFare(string $pickup, string $destination): float
+    // ── FIX: compute fare from real distance instead of hardcoded 3.0 km ─
+    private function computeFare(float $distanceKm): float
     {
-        $baseFare    = 15.00;
-        $ratePerKm   = 3.50;
-        $estimatedKm = 3.0;
-        return round($baseFare + ($ratePerKm * $estimatedKm), 2);
+        $baseFare  = 15.00;
+        $ratePerKm = 8.00;   // matches Flutter formula: 15 + (km × 8)
+        return round($baseFare + ($ratePerKm * $distanceKm), 2);
     }
 }

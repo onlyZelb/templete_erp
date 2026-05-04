@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS rides (
     pickup_location  TEXT   NOT NULL,
     destination      TEXT   NOT NULL,
     fare             NUMERIC(8,2) NOT NULL DEFAULT 0,
+    distance_km      NUMERIC(8,2) NOT NULL DEFAULT 0,
     status           VARCHAR(20)  NOT NULL DEFAULT 'pending'
                      CHECK (status IN ('pending','accepted','ongoing','completed','cancelled')),
     pickup_lat       DOUBLE PRECISION,
