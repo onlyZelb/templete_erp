@@ -19,6 +19,24 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./php/init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  # ── API Gateway (Spring Cloud Gateway) ────────────────────────────────────
+  gateway:
+    image: eclipse-temurin:17-jdk-alpine
+    container_name: pasadanow_gateway
+    depends_on:
+      - backend
+      - php
+      - django
+    ports:
+      - "8000:8000"
+    environment:
+      - JWT_SECRET=Zm9ydHktdHdvLWlzLXRoZS1hbnN3ZXItdG8tbGlmZS10aGUtdW5pdmVyc2UtYW5kLWV2ZXJ5dGhpbmc=
+    volumes:
+      - ./api-gateway:/app
+      - ~/.m2:/root/.m2
+    working_dir: /app
+    command: ./mvnw spring-boot:run
+
   # ── Auth service (Spring Boot) ─────────────────────────────────────────────
   backend:
     image: eclipse-temurin:17-jdk-alpine
@@ -43,7 +61,7 @@ services:
     working_dir: /app
     command: ./mvnw spring-boot:run -Dspring-boot.run.jvmArguments="-Dspring.devtools.restart.enabled=false -Dspring.data.mongodb.uri=mongodb://mongodb:27017/pasadanow_chat"
 
-  # ── Ride booking API (PHP + Composer) ─────────────────────────────────────
+  # ── Ride booking API (PHP + Composer) ──────────────────────────────────────
   php:
     build:
       context: ./php
@@ -65,7 +83,7 @@ services:
       - ./php/src:/var/www/html/src
       - ./php/index.php:/var/www/html/index.php
 
-  # ── Driver/Earnings/Admin API (Django) ────────────────────────────────────
+  # ── Driver/Earnings/Admin API (Django) ─────────────────────────────────────
   django:
     build:
       context: ./django
@@ -88,20 +106,16 @@ services:
       - ./django:/app
     working_dir: /app
 
-  # ── React frontend ─────────────────────────────────────────────────────────
+  # ── React frontend ──────────────────────────────────────────────────────────
   frontend:
     image: node:20-alpine
     container_name: pasadanow_frontend
     depends_on:
-      - backend
-      - php
-      - django
+      - gateway
     ports:
       - "3000:5173"
     environment:
-      - VITE_API_BASE_URL=http://localhost:8080
-      - VITE_PHP_API_URL=http://localhost:8081
-      - VITE_DJANGO_API_URL=http://localhost:8082
+      - VITE_API_BASE_URL=http://localhost:8000
       - CHOKIDAR_USEPOLLING=true
     volumes:
       - ./frontend:/app
@@ -109,7 +123,7 @@ services:
     working_dir: /app
     command: sh -c "npm install && npm run dev -- --host"
 
-  # ── MongoDB for chat service ───────────────────────────────────────────────
+  # ── MongoDB for chat service ────────────────────────────────────────────────
   mongodb:
     image: mongo:7-jammy
     container_name: pasadanow_mongo

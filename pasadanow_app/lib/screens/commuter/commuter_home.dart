@@ -519,7 +519,6 @@ class _CommuterHomeState extends State<CommuterHome>
   String? _activeBookingStatus;
   LatLng? _driverLiveLocation;
 
-  // ── FIX: Use a single _completedRide flag; never let polling revive state ──
   bool _showCompletionCard = false;
   Map<String, dynamic>? _completedRideSnapshot;
 
@@ -1065,7 +1064,6 @@ class _CommuterHomeState extends State<CommuterHome>
         _activeBooking =
             rideData is Map ? Map<String, dynamic>.from(rideData) : null;
         _activeBookingStatus = 'pending';
-        // ── FIX: Always clear completion state when a new ride is booked ──
         _showCompletionCard = false;
         _completedRideSnapshot = null;
       });
@@ -1107,7 +1105,6 @@ class _CommuterHomeState extends State<CommuterHome>
         Timer.periodic(const Duration(seconds: 3), (_) => _pollRideStatus());
   }
 
-  // ── FIX: Fully stop and clean all active ride state ──
   void _clearActiveRide() {
     _rideStatusTimer?.cancel();
     _rideStatusTimer = null;
@@ -1121,7 +1118,6 @@ class _CommuterHomeState extends State<CommuterHome>
   }
 
   Future<void> _pollRideStatus() async {
-    // ── FIX: Stop polling immediately if no active booking ──
     if (_activeBooking == null || _showCompletionCard) {
       _rideStatusTimer?.cancel();
       _rideStatusTimer = null;
@@ -1137,8 +1133,6 @@ class _CommuterHomeState extends State<CommuterHome>
       final prevStatus = _activeBookingStatus;
 
       if (!mounted) return;
-
-      // ── FIX: Do not update state if we already cleared the active ride ──
       if (_activeBooking == null) return;
 
       setState(() {
@@ -1162,7 +1156,6 @@ class _CommuterHomeState extends State<CommuterHome>
                 bounds: bounds, padding: const EdgeInsets.all(60)));
           }
         } else if (newStatus == 'completed') {
-          // ── FIX: Cancel timer FIRST, then snapshot, then clear ──
           _rideStatusTimer?.cancel();
           _rideStatusTimer = null;
 
@@ -1205,14 +1198,13 @@ class _CommuterHomeState extends State<CommuterHome>
     _clearActiveRide();
   }
 
-  // ── FIX: Dismiss completion card and fully reset booking form state ──
+  // ── FIX: Dismiss completion card and fully reset to booking form ──
   void _dismissCompletionCard() {
     _rideStatusTimer?.cancel();
     _rideStatusTimer = null;
     setState(() {
-      _showCompletionCard = false;
+      _showCompletionCard = false;      
       _completedRideSnapshot = null;
-      // Reset all route/booking form state so the fresh form is shown
       _routePoints = [];
       _pickupLatLng = null;
       _destLatLng = null;
@@ -1221,8 +1213,8 @@ class _CommuterHomeState extends State<CommuterHome>
       _fare = null;
       _selectedDriver = null;
       _selectedDriverId = null;
+      _activeBookingStatus = null; 
       _activeBooking = null;
-      _activeBookingStatus = null;
       _driverLiveLocation = null;
       _tab = 0;
     });
@@ -1587,7 +1579,6 @@ class _CommuterHomeState extends State<CommuterHome>
   Widget _buildDashboard(AuthProvider auth) {
     return SingleChildScrollView(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // ── FIX: Only show active ride banner when truly active (not completed, not showing card) ──
         if (_activeBooking != null && !_showCompletionCard)
           _buildActiveRideBanner(),
         Padding(
@@ -1633,8 +1624,6 @@ class _CommuterHomeState extends State<CommuterHome>
             !_showCompletionCard &&
             _activeBooking == null)
           _fareMetricsPanel(),
-
-        // ── FIX: Priority: completion card > active ride detail > booking form ──
         if (_showCompletionCard && _completedRideSnapshot != null)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
@@ -1650,7 +1639,6 @@ class _CommuterHomeState extends State<CommuterHome>
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
             child: _bookingCard(),
           ),
-
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
           child: _nearestDriversCard(),
@@ -1756,7 +1744,7 @@ class _CommuterHomeState extends State<CommuterHome>
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  //  RIDE COMPLETION CARD
+  //  RIDE COMPLETION CARD  ← FIX IS HERE
   // ══════════════════════════════════════════════════════════════════════
 
   Widget _rideCompletionCard(Map<String, dynamic> ride) {
@@ -1861,7 +1849,30 @@ class _CommuterHomeState extends State<CommuterHome>
           ]),
         ),
         const SizedBox(height: 20),
-        // ── Only "View Trip History" button remains; "Book Another Ride" removed ──
+
+        // ── PRIMARY: Book Another Ride → resets everything, goes to booking form ──
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: _dismissCompletionCard,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _accent,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
+            ),
+            icon: const Icon(_IC.book, size: 16),
+            label: const Text(
+              'Book Another Ride',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // ── SECONDARY: View Trip History ──
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(

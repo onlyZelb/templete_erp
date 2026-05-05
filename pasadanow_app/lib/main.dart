@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
@@ -7,6 +8,14 @@ import 'screens/driver/driver_home.dart';
 import 'screens/login_screen.dart';
 
 void main() {
+  // Suppress Dart VM debug channel noise on web (dev mode only)
+  if (kIsWeb && kDebugMode) {
+    FlutterError.onError = (FlutterErrorDetails details) {
+      if (details.exception.toString().contains('Cannot send Null')) return;
+      FlutterError.presentError(details);
+    };
+  }
+
   runApp(const PasadaNowApp());
 }
 
@@ -61,15 +70,11 @@ class _AppEntryState extends State<_AppEntry> {
     }
   }
 
-  /// Normalises any role format Spring Boot might return:
-  /// "DRIVER" / "ROLE_DRIVER" / "driver" / "Driver"  →  "driver"
-  /// "COMMUTER" / "ROLE_COMMUTER" / "commuter"        →  "commuter"
-  /// "ADMIN"   / "ROLE_ADMIN"    / "admin"            →  "admin"
   String _normalizeRole(String? raw) {
     if (raw == null || raw.isEmpty) return 'commuter';
-    final lower = raw.toLowerCase(); // "role_driver" / "driver" / etc.
+    final lower = raw.toLowerCase();
     if (lower.contains('driver')) return 'driver';
-    if (lower.contains('admin'))  return 'admin';
+    if (lower.contains('admin')) return 'admin';
     return 'commuter';
   }
 
@@ -96,7 +101,7 @@ class _AppEntryState extends State<_AppEntry> {
       case 'driver':
         return const DriverHome();
       case 'admin':
-        return const CommuterHome(); // swap for AdminHome() when ready
+        return const CommuterHome();
       case 'commuter':
       default:
         return const CommuterHome();

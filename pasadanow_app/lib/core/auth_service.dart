@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'constants.dart';
@@ -79,10 +80,10 @@ class AuthService {
       'username': data['username'] ?? '',
       'password': data['password'] ?? '',
       'fullName': data['fullName'] ?? '',
-      'age': data['age'] ?? '', // ✅ FIXED: was missing
+      'age': data['age'] ?? '',
       'phone': data['phone'] ?? '',
       'email': data['email'] ?? '',
-      'address': data['address'] ?? '', // ✅ FIXED: was missing
+      'address': data['address'] ?? '',
       'role': data['role'] ?? '',
       if (data['profilePhoto'] != null) 'profilePhoto': data['profilePhoto'],
       if (data['role'] == 'driver') ...{
@@ -102,7 +103,7 @@ class AuthService {
     }
   }
 
-// ── Logout ───────────────────────────────────────────────────────────────
+  // ── Logout ───────────────────────────────────────────────────────────────
   Future<void> logout({String? role}) async {
     try {
       // If driver, set offline before logging out
@@ -112,8 +113,15 @@ class AuthService {
           final dio = Dio(BaseOptions(baseUrl: ApiConstants.phpBase));
           await dio.patch(
             '/drivers/me/status',
-            data: {'is_online': false, 'lat': null, 'lng': null},
-            options: Options(headers: {'Authorization': 'Bearer $token'}),
+            // ✅ FIX: pre-encode to JSON string so Dio skips its own
+            // serializer — this allows null to become JSON null correctly
+            data: jsonEncode({'is_online': false, 'lat': null, 'lng': null}),
+            options: Options(
+              headers: {
+                'Authorization': 'Bearer $token',
+                'Content-Type': 'application/json',
+              },
+            ),
           );
         }
       }

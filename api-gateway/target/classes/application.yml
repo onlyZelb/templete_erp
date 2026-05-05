@@ -1,0 +1,57 @@
+server:
+  port: 8000
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    loadbalancer:
+      enabled: false
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: auth-service
+              uri: http://backend:8080
+              predicates:
+                - Path=/api/auth/**
+            - id: chat-service
+              uri: http://backend:8080
+              predicates:
+                - Path=/api/chat/**
+            - id: websocket-service
+              uri: http://backend:8080
+              predicates:
+                - Path=/ws/**
+            - id: rides-service
+              uri: http://php:80
+              predicates:
+                - Path=/api/rides/**
+              filters:
+                - RewritePath=/api/rides(?<segment>.*), /${segment}
+            - id: drivers-service
+              uri: http://django:8000
+              predicates:
+                - Path=/api/drivers/**
+            - id: earnings-service
+              uri: http://django:8000
+              predicates:
+                - Path=/api/earnings/**
+            - id: commuters-service
+              uri: http://django:8000
+              predicates:
+                - Path=/api/commuters/**
+            - id: admin-service
+              uri: http://django:8000
+              predicates:
+                - Path=/api/admin/**
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                  - "http://localhost:3000"
+                  - "http://localhost:5173"
+                allowedMethods: "*"
+                allowedHeaders: "*"
+                allowCredentials: true
+jwt:
+  secret: Zm9ydHktdHdvLWlzLXRoZS1hbnN3ZXItdG8tbGlmZS10aGUtdW5pdmVyc2UtYW5kLWV2ZXJ5dGhpbmc=
