@@ -1158,10 +1158,13 @@ class _CommuterHomeState extends State<CommuterHome>
         });
         return;
       }
-      if (newStatus == 'cancelled') {
+      if (newStatus == 'cancelled' || newStatus == 'declined') {
         _rideStatusTimer?.cancel();
         _rideStatusTimer = null;
-        _showSnack('Ride was cancelled.', _red);
+        final msg = newStatus == 'declined'
+            ? 'Driver declined. Please select another driver.'
+            : 'Ride was cancelled.';
+        _showSnack(msg, _red);
         Future.delayed(const Duration(milliseconds: 400), () {
           _clearActiveRide();
         });

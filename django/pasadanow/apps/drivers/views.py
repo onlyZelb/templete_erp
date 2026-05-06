@@ -203,7 +203,8 @@ class DeclineRideView(APIView):
             raise NotFound('Ride not found or not assigned to you')
         # Clear the driver assignment so another driver can be selected
         ride.driver = None
-        ride.save(update_fields=['driver_id', 'updated_at'])
+        ride.status = 'declined'
+        ride.save(update_fields=['driver_id', 'status', 'updated_at'])
         return Response({'detail': 'Ride declined.'})
 
 
