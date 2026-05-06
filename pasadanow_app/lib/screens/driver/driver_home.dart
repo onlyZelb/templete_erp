@@ -316,8 +316,8 @@ class _DriverHomeState extends State<DriverHome>
     }
 
     try {
-      final dio = ApiClient.build(ApiConstants.phpBase);
-      await dio.patch('/drivers/me/status', data: {
+      final dio = ApiClient.build(ApiConstants.djangoBase);
+      await dio.patch('/api/drivers/me/status', data: {
         'is_online': next,
         'lat': _driverLocation.latitude,
         'lng': _driverLocation.longitude,
@@ -335,8 +335,8 @@ class _DriverHomeState extends State<DriverHome>
   Future<void> _pushLocation() async {
     if (!_isOnline) return;
     try {
-      final phpDio = ApiClient.build(ApiConstants.phpBase);
-      await phpDio.patch('/drivers/me/location', data: {
+      final dio = ApiClient.build(ApiConstants.djangoBase);
+      await dio.patch('/api/drivers/me/location', data: {
         'lat': _driverLocation.latitude,
         'lng': _driverLocation.longitude,
       });

@@ -701,7 +701,7 @@ class _CommuterHomeState extends State<CommuterHome>
     if (_activeBooking == null) return;
     try {
       final dio = ApiClient.build(ApiConstants.phpBase);
-      await dio.post('/rides/${_activeBooking!['id']}/location', data: {
+      await dio.post('/api/rides/${_activeBooking!['id']}/location', data: {
         'lat': loc.latitude,
         'lng': loc.longitude,
         'accuracy': _gpsAccuracy,
@@ -947,7 +947,7 @@ class _CommuterHomeState extends State<CommuterHome>
   Future<void> _loadRides() async {
     try {
       final dio = ApiClient.build(ApiConstants.phpBase);
-      final res = await dio.get('/rides');
+      final res = await dio.get('/api/rides');
       if (mounted) setState(() => _rides = res.data);
     } catch (_) {}
   }
@@ -957,7 +957,7 @@ class _CommuterHomeState extends State<CommuterHome>
     setState(() => _driversLoading = true);
     try {
       final dio = ApiClient.build(ApiConstants.phpBase);
-      final res = await dio.get('/drivers/online');
+      final res = await dio.get('/api/drivers/online');
       if (mounted) {
         final fetched = List<Map<String, dynamic>>.from(
           (res.data as List).map((d) {
@@ -996,7 +996,7 @@ class _CommuterHomeState extends State<CommuterHome>
     setState(() => _profileLoading = true);
     try {
       final dio = ApiClient.build(ApiConstants.djangoBase);
-      final res = await dio.get('/commuters/me/profile');
+      final res = await dio.get('/api/commuters/me/profile');
       final data = res.data as Map<String, dynamic>;
       if (mounted) setState(() => _profile = CommuterProfile.fromJson(data));
     } catch (_) {}
@@ -1006,7 +1006,7 @@ class _CommuterHomeState extends State<CommuterHome>
   Future<bool> _updateProfile(Map<String, dynamic> updates) async {
     try {
       final dio = ApiClient.build(ApiConstants.djangoBase);
-      await dio.patch('/commuters/me/profile', data: updates);
+      await dio.patch('/api/commuters/me/profile', data: updates);
       await _loadCommuterProfile();
       return true;
     } catch (_) {
@@ -1044,7 +1044,7 @@ class _CommuterHomeState extends State<CommuterHome>
     setState(() => _loading = true);
     try {
       final dio = ApiClient.build(ApiConstants.phpBase);
-      final response = await dio.post('/rides', data: {
+      final response = await dio.post('/api/rides', data: {
         'pickup_location': _pickup.text,
         'destination': _destination.text,
         'driver_id': _selectedDriverId,
@@ -1118,6 +1118,7 @@ class _CommuterHomeState extends State<CommuterHome>
   }
 
   Future<void> _pollRideStatus() async {
+    debugPrint("POLL: _activeBooking=\${_activeBooking?['id']} _showCompletionCard=\$_showCompletionCard status=\$_activeBookingStatus");
     if (_activeBooking == null || _showCompletionCard) {
       _rideStatusTimer?.cancel();
       _rideStatusTimer = null;
@@ -1127,7 +1128,7 @@ class _CommuterHomeState extends State<CommuterHome>
     try {
       final rideId = _activeBooking!['id'];
       final dio = ApiClient.build(ApiConstants.phpBase);
-      final res = await dio.get('/rides/$rideId/status');
+      final res = await dio.get('/api/rides/$rideId/status');
       final data = res.data as Map<String, dynamic>;
       final newStatus = data['status']?.toString() ?? 'pending';
       final prevStatus = _activeBookingStatus;
@@ -1140,12 +1141,32 @@ class _CommuterHomeState extends State<CommuterHome>
         _activeBooking = {..._activeBooking!, ...data};
         if (data['driver_lat'] != null && data['driver_lng'] != null) {
           _driverLiveLocation = LatLng(
-            (data['driver_lat'] as num).toDouble(),
-            (data['driver_lng'] as num).toDouble(),
+            double.parse(data['driver_lat'].toString()),
+            double.parse(data['driver_lng'].toString()),
           );
         }
       });
 
+      // Always check terminal states regardless of prevStatus
+      if (newStatus == 'completed') {
+        debugPrint("POLL: GOT COMPLETED - calling clearActiveRide");
+        _rideStatusTimer?.cancel();
+        _rideStatusTimer = null;
+        _showSnack('Ride completed! Thank you for riding with PasadaNow.', _green);
+        Future.delayed(const Duration(milliseconds: 400), () {
+          _clearActiveRide();
+        });
+        return;
+      }
+      if (newStatus == 'cancelled') {
+        _rideStatusTimer?.cancel();
+        _rideStatusTimer = null;
+        _showSnack('Ride was cancelled.', _red);
+        Future.delayed(const Duration(milliseconds: 400), () {
+          _clearActiveRide();
+        });
+        return;
+      }
       if (prevStatus != newStatus) {
         if (newStatus == 'accepted' || newStatus == 'ongoing') {
           _showSnack('Driver accepted your ride! On the way…', _green);
@@ -1155,45 +1176,17 @@ class _CommuterHomeState extends State<CommuterHome>
             _mapController.fitCamera(CameraFit.bounds(
                 bounds: bounds, padding: const EdgeInsets.all(60)));
           }
-        } else if (newStatus == 'completed') {
-          _rideStatusTimer?.cancel();
-          _rideStatusTimer = null;
-
-          final snapshot = Map<String, dynamic>.from(_activeBooking!);
-
-          setState(() {
-            _activeBooking = null;
-            _activeBookingStatus = null;
-            _driverLiveLocation = null;
-            _showCompletionCard = true;
-            _completedRideSnapshot = snapshot;
-            _tab = 0;
-          });
-
-          _loadRides();
-          _showSnack(
-              'Ride completed! Thank you for riding with PasadaNow.', _green);
-          return;
-        } else if (newStatus == 'cancelled') {
-          _rideStatusTimer?.cancel();
-          _rideStatusTimer = null;
-
-          _showSnack('Ride was cancelled.', _red);
-
-          Future.delayed(const Duration(milliseconds: 400), () {
-            _clearActiveRide();
-          });
         }
       }
-    } catch (_) {}
+    } catch (e, st) { debugPrint("Poll error: $e\n$st"); }
   }
 
   void _cancelActiveRide() async {
     if (_activeBooking == null) return;
     try {
       final dio = ApiClient.build(ApiConstants.phpBase);
-      await dio.patch('/rides/${_activeBooking!['id']}/cancel');
-    } catch (_) {}
+      await dio.patch('/api/rides/${_activeBooking!['id']}/cancel');
+    } catch (e, st) { debugPrint("Poll error: $e\n$st"); }
     _showSnack('Ride cancelled.', _orange);
     _clearActiveRide();
   }

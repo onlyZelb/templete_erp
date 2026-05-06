@@ -3,28 +3,16 @@ import logo from "../assets/logo.png";
 import { useAuth } from "../hooks/useAuth";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const DJANGO_URL =
-  import.meta.env.VITE_DJANGO_API_URL || "http://localhost:8082";
+const DJANGO_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-// ─── Helper: get token from localStorage ─────────────────────────────────────
-function getAuthToken() {
-  return (
-    localStorage.getItem("token") ||
-    localStorage.getItem("access_token") ||
-    localStorage.getItem("authToken") ||
-    null
-  );
-}
-
+// ─── Helper: no token needed — /api/admin is public at gateway ───────────────
 function authFetch(url, options = {}) {
-  const token = getAuthToken();
   return fetch(url, {
     ...options,
     credentials: "omit",
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {}),
     },
   });
@@ -211,7 +199,6 @@ function getTripOrigin(t) {
 function getTripDestination(t) {
   return t?.destination || "—";
 }
-
 function ini(n) {
   const p = (n || "?").trim().split(" ");
   return (p[0][0] + (p[1] ? p[1][0] : "")).toUpperCase();
@@ -292,7 +279,7 @@ async function callVerify(uid, role, newStatus, setUsers, setModalId) {
     setModalId(null);
   } catch (e) {
     console.error("Verify failed:", e);
-    alert("Could not update status. Is Django running on port 8082?");
+    alert("Could not update status.");
   }
 }
 
@@ -1103,7 +1090,7 @@ function TripsView({ trips }) {
   );
 }
 
-// ─── Commuter Modal — NO verify buttons, view only ───────────────────────────
+// ─── Commuter Modal ───────────────────────────────────────────────────────────
 function CommutterModal({ user, onClose }) {
   const name = getDisplayName(user);
   return (
@@ -1134,7 +1121,6 @@ function CommutterModal({ user, onClose }) {
           boxShadow: "0 40px 100px rgba(0,0,0,.8)",
         }}
       >
-        {/* Header */}
         <div
           style={{
             display: "flex",
@@ -1168,8 +1154,6 @@ function CommutterModal({ user, onClose }) {
             <Icon name="x" size={14} />
           </button>
         </div>
-
-        {/* Identity row */}
         <div
           style={{
             display: "flex",
@@ -1215,8 +1199,6 @@ function CommutterModal({ user, onClose }) {
             <StatusBadge status={user.status} />
           </div>
         </div>
-
-        {/* Info grid */}
         <div
           style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}
         >
@@ -1249,7 +1231,6 @@ function CommutersView({ users, setUsers }) {
   const modalUser = users.find(
     (u) => u.id === modalId && u.role === "commuter",
   );
-
   return (
     <>
       <div
@@ -1538,10 +1519,10 @@ function DriverModal({ user, onClose, onUpdateStatus }) {
       .catch(() => {
         if (!cancelled) {
           setPhotos({
-            photo_license: user.photo_license ?? user.photoLicense ?? null,
-            photo_plate: user.photo_plate ?? user.photoPlate ?? null,
-            photo_toda: user.photo_toda ?? user.photoToda ?? null,
-            profile_photo: user.profile_photo ?? user.profilePhoto ?? null,
+            photo_license: user.photo_license ?? null,
+            photo_plate: user.photo_plate ?? null,
+            photo_toda: user.photo_toda ?? null,
+            profile_photo: user.profile_photo ?? null,
           });
           setPhotosLoading(false);
         }
@@ -1559,10 +1540,10 @@ function DriverModal({ user, onClose, onUpdateStatus }) {
   };
 
   const name = getDisplayName(user);
-  const licensePhoto = photos?.photo_license ?? photos?.photoLicense ?? null;
-  const platePhoto = photos?.photo_plate ?? photos?.photoPlate ?? null;
-  const todaPhoto = photos?.photo_toda ?? photos?.photoToda ?? null;
-  const profilePhoto = photos?.profile_photo ?? photos?.profilePhoto ?? null;
+  const licensePhoto = photos?.photo_license ?? null;
+  const platePhoto = photos?.photo_plate ?? null;
+  const todaPhoto = photos?.photo_toda ?? null;
+  const profilePhoto = photos?.profile_photo ?? null;
   const hasPhotos = licensePhoto || platePhoto || todaPhoto;
   const online = isDriverOnline(user);
 
@@ -1594,7 +1575,6 @@ function DriverModal({ user, onClose, onUpdateStatus }) {
           boxShadow: "0 40px 100px rgba(0,0,0,.8)",
         }}
       >
-        {/* Header */}
         <div
           style={{
             display: "flex",
@@ -1628,8 +1608,6 @@ function DriverModal({ user, onClose, onUpdateStatus }) {
             <Icon name="x" size={14} />
           </button>
         </div>
-
-        {/* Identity row */}
         <div
           style={{
             display: "flex",
@@ -1703,8 +1681,6 @@ function DriverModal({ user, onClose, onUpdateStatus }) {
             </div>
           </div>
         </div>
-
-        {/* Info grid — all Driver fields including age + address */}
         <div
           style={{
             display: "grid",
@@ -1724,8 +1700,6 @@ function DriverModal({ user, onClose, onUpdateStatus }) {
           <InfoItem label="License No." value={getLicenseNo(user)} />
           <InfoItem label="Joined" value={fmtD(user.created_at)} />
         </div>
-
-        {/* Credential Photos */}
         <div
           style={{
             marginBottom: 18,
@@ -1820,8 +1794,6 @@ function DriverModal({ user, onClose, onUpdateStatus }) {
             </div>
           )}
         </div>
-
-        {/* Action buttons */}
         <div style={{ display: "flex", gap: 10 }}>
           <button
             onClick={() => handle("verified")}
@@ -1899,7 +1871,6 @@ function DriversView({ users, setUsers }) {
   const modalUser = users.find((u) => u.id === modalId && u.role === "driver");
   const updateStatus = (uid, newStatus) =>
     callVerify(uid, "driver", newStatus, setUsers, setModalId);
-
   return (
     <>
       <div
@@ -2018,9 +1989,6 @@ function DriversView({ users, setUsers }) {
                   ) : (
                     rows.map((d) => {
                       const name = getDisplayName(d);
-                      const plateNo = getPlateNo(d);
-                      const licenseNo = getLicenseNo(d);
-                      const organization = getOrganization(d);
                       const online = isDriverOnline(d);
                       return (
                         <tr key={`driver-${d.id}`} style={ds.tr}>
@@ -2078,7 +2046,7 @@ function DriversView({ users, setUsers }) {
                             {d.username || "—"}
                           </td>
                           <td style={ds.td}>
-                            {plateNo ? (
+                            {getPlateNo(d) ? (
                               <span
                                 style={{
                                   background: "#0a1f0a",
@@ -2091,7 +2059,7 @@ function DriversView({ users, setUsers }) {
                                   fontFamily: "monospace",
                                 }}
                               >
-                                {plateNo}
+                                {getPlateNo(d)}
                               </span>
                             ) : (
                               <span style={{ color: "#2a4a62" }}>—</span>
@@ -2104,12 +2072,12 @@ function DriversView({ users, setUsers }) {
                               color: "#8ab4d4",
                             }}
                           >
-                            {licenseNo || (
+                            {getLicenseNo(d) || (
                               <span style={{ color: "#2a4a62" }}>—</span>
                             )}
                           </td>
                           <td style={{ ...ds.td, fontSize: "0.72rem" }}>
-                            {organization || (
+                            {getOrganization(d) || (
                               <span style={{ color: "#2a4a62" }}>—</span>
                             )}
                           </td>
@@ -2255,7 +2223,7 @@ export default function Dashboard() {
       );
     }
     try {
-      const res = await authFetch(`${DJANGO_URL}/api/admin/trips`);
+      const res = await authFetch(`${DJANGO_URL}/api/admin/rides`);
       if (res.ok) setTrips(await res.json());
     } catch (e) {
       console.error("Failed to load trips:", e);
@@ -2277,8 +2245,6 @@ export default function Dashboard() {
   return (
     <div style={ds.root}>
       <style>{dashCss}</style>
-
-      {/* ── Sidebar ── */}
       <aside style={ds.sidebar}>
         <div style={ds.logo}>
           <img src={logo} alt="Logo" style={{ width: 32, height: "auto" }} />
@@ -2306,7 +2272,6 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-
         <div style={ds.navSection}>Navigation</div>
         <nav
           style={{
@@ -2385,7 +2350,6 @@ export default function Dashboard() {
             );
           })}
         </nav>
-
         <div style={{ padding: "8px 8px 0" }}>
           <button
             onClick={loadData}
@@ -2409,7 +2373,6 @@ export default function Dashboard() {
             <Icon name="refresh" size={12} /> Refresh Data
           </button>
         </div>
-
         <div
           style={{
             margin: "8px 8px 0",
@@ -2456,7 +2419,6 @@ export default function Dashboard() {
                 : "All systems normal"}
           </div>
         </div>
-
         <div
           style={{
             marginTop: "auto",
@@ -2533,8 +2495,6 @@ export default function Dashboard() {
           </button>
         </div>
       </aside>
-
-      {/* ── Main ── */}
       <main
         style={{
           flex: 1,
@@ -2581,7 +2541,6 @@ export default function Dashboard() {
             {clock}
           </div>
         </header>
-
         {error && (
           <div
             style={{
@@ -2600,7 +2559,6 @@ export default function Dashboard() {
             <Icon name="x" size={14} /> {error}
           </div>
         )}
-
         <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
           {loading ? (
             <div

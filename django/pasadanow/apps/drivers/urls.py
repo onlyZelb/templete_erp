@@ -7,6 +7,7 @@ from .views import (
     AvailableDriversView,
     AcceptRideView,
     CompleteRideView,
+    DeclineRideView,
     PendingRideView,
     DriverLocationView,
     CommuterLocationView,
@@ -22,6 +23,7 @@ urlpatterns = [
     path('rides/pending',                               PendingRideView.as_view()),
     path('rides/<int:ride_id>/accept',                  AcceptRideView.as_view()),
     path('rides/<int:ride_id>/complete',                CompleteRideView.as_view()),
+    path('rides/<int:ride_id>/decline',                 DeclineRideView.as_view()),
     path('rides/<int:ride_id>/driver-location',         DriverLocationView.as_view()),
     path('rides/<int:ride_id>/commuter-location',       CommuterLocationView.as_view()),
 ]

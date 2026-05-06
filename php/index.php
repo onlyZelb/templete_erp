@@ -7,24 +7,14 @@ foreach ($_ENV as $key => $value) {
     putenv("$key=$value");
 }
 
-// ── CORS headers ──────────────────────────────────────────────────────────────
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+// ── CORS is handled exclusively by the API Gateway ────────────────────────────
+// DO NOT add Access-Control-Allow-Origin here — the Spring Cloud Gateway
+// already sets it. Adding it again causes a duplicate-header CORS error
+// that browsers reject.
 
-// Allow any localhost port (for Flutter web dev on random ports)
-$allowedOrigin = 'http://localhost:3000';
-if (preg_match('/^http:\/\/localhost(:\d+)?$/', $origin)) {
-    $allowedOrigin = $origin;
-} elseif (preg_match('/^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/', $origin)) {
-    $allowedOrigin = $origin;
-}
-
-header("Access-Control-Allow-Origin: $allowedOrigin");
-header('Access-Control-Allow-Credentials: true');
-header('Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, Cookie');
 header('Content-Type: application/json');
 
-// Handle pre-flight
+// Pre-flight is handled by the gateway, but kept here as a safety net
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();

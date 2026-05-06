@@ -112,7 +112,7 @@ class AuthService {
         if (token != null) {
           final dio = Dio(BaseOptions(baseUrl: ApiConstants.phpBase));
           await dio.patch(
-            '/drivers/me/status',
+            '/api/drivers/me/status',
             // ✅ FIX: pre-encode to JSON string so Dio skips its own
             // serializer — this allows null to become JSON null correctly
             data: jsonEncode({'is_online': false, 'lat': null, 'lng': null}),
