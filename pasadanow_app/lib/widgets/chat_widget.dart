@@ -1,15 +1,15 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:stomp_dart_client/stomp.dart';
 import 'package:stomp_dart_client/stomp_config.dart';
 import 'package:stomp_dart_client/stomp_frame.dart';
 import '../core/constants.dart';
-import '../core/api_client.dart';
 
 class ChatWidget extends StatefulWidget {
   final String rideId;
   final String username;
-  final String role;
+  final String role; // 'commuter' or 'driver'
 
   const ChatWidget({
     super.key,
@@ -38,8 +38,10 @@ class _ChatWidgetState extends State<ChatWidget> {
   static const _textMut = Color(0xFF8A9BC0);
   static const _border = Color(0xFF1E3A6E);
 
+  // ── Spring Boot base comes from constants, e.g. http://10.0.2.2:8080 ──
   String get _httpBase => ApiConstants.springBase;
 
+  // ── WebSocket URL: swap http→ws, append SockJS path ───────────────────
   String get _wsUrl =>
       _httpBase.replaceFirst(RegExp(r'^http'), 'ws') + '/ws/chat/websocket';
 
@@ -58,22 +60,25 @@ class _ChatWidgetState extends State<ChatWidget> {
     super.dispose();
   }
 
-  // ── FIXED: now uses ApiClient so the JWT token is attached ────────────
+  // ── Load chat history from Spring Boot REST endpoint ───────────────────
   Future<void> _loadHistory() async {
     try {
-      final dio = ApiClient.build(_httpBase);
-      final res = await dio.get('/api/chat/${widget.rideId}');
-      if (mounted) {
-        final List<dynamic> data = res.data as List;
+      final uri = Uri.parse('$_httpBase/api/chat/${widget.rideId}');
+      final res = await http.get(uri);
+      if (res.statusCode == 200 && mounted) {
+        final List<dynamic> data = jsonDecode(res.body);
         setState(() {
           _messages.clear();
           _messages.addAll(data.cast<Map<String, dynamic>>());
         });
         _scrollToBottom();
       }
-    } catch (_) {}
+    } catch (_) {
+      // silently ignore — WebSocket will deliver new messages anyway
+    }
   }
 
+  // ── Connect STOMP over SockJS ──────────────────────────────────────────
   void _connectWebSocket() {
     _client = StompClient(
       config: StompConfig(
@@ -88,6 +93,7 @@ class _ChatWidgetState extends State<ChatWidget> {
         onWebSocketError: (_) {
           if (mounted) setState(() => _connected = false);
         },
+        // Reconnect automatically every 5 seconds if dropped
         reconnectDelay: const Duration(seconds: 5),
       ),
     );
@@ -135,6 +141,8 @@ class _ChatWidgetState extends State<ChatWidget> {
     });
   }
 
+  // ── UI ─────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -177,8 +185,7 @@ class _ChatWidgetState extends State<ChatWidget> {
         const SizedBox(width: 5),
         Text(
           _connected ? 'Live' : 'Connecting…',
-          style:
-              TextStyle(color: _connected ? _green : _orange, fontSize: 10),
+          style: TextStyle(color: _connected ? _green : _orange, fontSize: 10),
         ),
       ]),
     );
@@ -204,8 +211,7 @@ class _ChatWidgetState extends State<ChatWidget> {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: _card,
-        borderRadius:
-            const BorderRadius.vertical(bottom: Radius.circular(16)),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
         border: Border(top: BorderSide(color: _border)),
       ),
       child: Row(children: [
@@ -223,8 +229,8 @@ class _ChatWidgetState extends State<ChatWidget> {
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 9),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
               isDense: true,
             ),
           ),
@@ -238,8 +244,8 @@ class _ChatWidgetState extends State<ChatWidget> {
               color: _connected ? _accent : _border,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.send_rounded,
-                color: Colors.white, size: 16),
+            child:
+                const Icon(Icons.send_rounded, color: Colors.white, size: 16),
           ),
         ),
       ]),
@@ -256,8 +262,7 @@ class _ChatWidgetState extends State<ChatWidget> {
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 7),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
         constraints: const BoxConstraints(maxWidth: 240),
         decoration: BoxDecoration(
           color: isMe

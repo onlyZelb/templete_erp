@@ -28,7 +28,9 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
             "/api/auth/signup",
             "/api/auth/register",
             "/api/auth/logout",
-            "/api/auth/google",      // ← Google login — no JWT yet at this point
+            "/api/auth/google",
+            "/api/auth/reset-password",
+            "/api/auth/forgot-password",      // ← Google login — no JWT yet at this point
             "/api/admin/",
             "/api/drivers/online",
             "/api/rides/fare",

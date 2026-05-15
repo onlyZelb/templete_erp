@@ -48,14 +48,6 @@ spring:
               filters:
                 - RewritePath=/api/drivers/me/location, /drivers/me/location
 
-            # ── Rides report → Django (BEFORE rides-service) ──────────
-            - id: rides-report-service
-              uri: http://django:8000
-              predicates:
-                - Path=/api/rides/*/report
-              filters:
-                - RewritePath=/api/rides/(?<rid>.*)/report, /api/rides/$\{rid}/report
-
             - id: rides-service
               uri: http://php:80
               predicates:
@@ -117,4 +109,4 @@ spring:
                 allowCredentials: true
 
 jwt:
-  secret: Zm9ydHktdHdvLWlzLXRoZS1hbnN3ZXItdG8tbGlmZS10aGUtdW5pdmVyc2UtYW5kLWV2ZXJ5dGhpbmc=
+  secret: Zm9ydHktdHdvLWlzLXRoZS1hbnN3ZXItdG8tbGlmZS10aGUtdW5pdmVyc2UtYW5kLWV5dGhpbmc=

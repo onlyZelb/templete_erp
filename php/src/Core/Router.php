@@ -52,10 +52,6 @@ class Router {
             $method === 'POST' && preg_match('#^/rides/(\d+)/location$#', $path, $m)
                 => $controller->commuterLocation($user, (int)$m[1]),
 
-            // ── Reports ───────────────────────────────────────────────────
-            $method === 'POST' && preg_match('#^/rides/(\d+)/report$#', $path, $m)
-                => $controller->submitReport($user, (int)$m[1]),
-
             // ── Driver status & location ───────────────────────────────────
             $method === 'PATCH' && $path === '/drivers/me/status'
                 => $controller->updateDriverStatus($user),

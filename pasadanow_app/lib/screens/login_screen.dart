@@ -6,6 +6,7 @@ import 'register_screen.dart';
 import 'pending_screen.dart';
 import 'commuter/commuter_home.dart';
 import 'driver/driver_home.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,7 +18,7 @@ class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
   final _username = TextEditingController();
   final _password = TextEditingController();
-  bool _obscure    = true;
+  bool _obscure = true;
   bool _rememberMe = false;
   String? _usernameError;
   String? _passwordError;
@@ -25,24 +26,24 @@ class _LoginScreenState extends State<LoginScreen>
   static const _storage = FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
   );
-  static const _keyUsername   = 'rm_username';
-  static const _keyPassword   = 'rm_password';
+  static const _keyUsername = 'rm_username';
+  static const _keyPassword = 'rm_password';
   static const _keyRememberMe = 'rm_enabled';
 
   late AnimationController _animController;
-  late Animation<double>   _fadeAnim;
-  late Animation<Offset>   _slideAnim;
+  late Animation<double> _fadeAnim;
+  late Animation<Offset> _slideAnim;
 
-  static const Color _bgDeep        = Color(0xFF0B1B35);
-  static const Color _bgCard        = Color(0xFF102245);
-  static const Color _accent        = Color(0xFF3D7FD4);
-  static const Color _accentLight   = Color(0xFF5B9BF0);
-  static const Color _orange        = Color(0xFFE8863A);
-  static const Color _errorRed      = Color(0xFFE05555);
-  static const Color _textPrimary   = Color(0xFFE8EEF7);
-  static const Color _textMuted     = Color(0xFF8A9BC0);
+  static const Color _bgDeep = Color(0xFF0B1B35);
+  static const Color _bgCard = Color(0xFF102245);
+  static const Color _accent = Color(0xFF3D7FD4);
+  static const Color _accentLight = Color(0xFF5B9BF0);
+  static const Color _orange = Color(0xFFE8863A);
+  static const Color _errorRed = Color(0xFFE05555);
+  static const Color _textPrimary = Color(0xFFE8EEF7);
+  static const Color _textMuted = Color(0xFF8A9BC0);
   static const Color _borderDefault = Color(0xFF1E3A6E);
-  static const Color _inputBg       = Color(0xFF0D1E3D);
+  static const Color _inputBg = Color(0xFF0D1E3D);
 
   @override
   void initState() {
@@ -51,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen>
       vsync: this,
       duration: const Duration(milliseconds: 700),
     );
-    _fadeAnim  = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
+    _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
     _slideAnim = Tween<Offset>(
       begin: const Offset(0, 0.08),
       end: Offset.zero,
@@ -75,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen>
     final savedPassword = await _storage.read(key: _keyPassword);
     if (!mounted) return;
     setState(() {
-      _rememberMe    = true;
+      _rememberMe = true;
       _username.text = savedUsername ?? '';
       _password.text = savedPassword ?? '';
     });
@@ -84,8 +85,8 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _saveCredentials() async {
     if (_rememberMe) {
       await _storage.write(key: _keyRememberMe, value: 'true');
-      await _storage.write(key: _keyUsername,   value: _username.text.trim());
-      await _storage.write(key: _keyPassword,   value: _password.text);
+      await _storage.write(key: _keyUsername, value: _username.text.trim());
+      await _storage.write(key: _keyPassword, value: _password.text);
     } else {
       await _storage.delete(key: _keyRememberMe);
       await _storage.delete(key: _keyUsername);
@@ -95,8 +96,10 @@ class _LoginScreenState extends State<LoginScreen>
 
   bool _validate() {
     setState(() {
-      _usernameError = _username.text.trim().isEmpty ? 'Please enter your username.' : null;
-      _passwordError = _password.text.isEmpty        ? 'Please enter your password.' : null;
+      _usernameError =
+          _username.text.trim().isEmpty ? 'Please enter your username.' : null;
+      _passwordError =
+          _password.text.isEmpty ? 'Please enter your password.' : null;
     });
     return _usernameError == null && _passwordError == null;
   }
@@ -144,7 +147,8 @@ class _LoginScreenState extends State<LoginScreen>
           content: Text(auth.error!),
           backgroundColor: _errorRed,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ));
       }
       return;
@@ -278,14 +282,21 @@ class _LoginScreenState extends State<LoginScreen>
                                     ),
                                   ),
                                   const Spacer(),
+                                  // ── Forgot Password — now navigates to ForgotPasswordScreen ──
                                   GestureDetector(
-                                    onTap: () {},
-                                    child: Row(
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const ForgotPasswordScreen(),
+                                      ),
+                                    ),
+                                    child: const Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Icon(Icons.vpn_key_outlined,
+                                        Icon(Icons.vpn_key_outlined,
                                             size: 14, color: _accentLight),
-                                        const SizedBox(width: 4),
+                                        SizedBox(width: 4),
                                         Text(
                                           'Forgot Password?',
                                           style: TextStyle(
@@ -306,7 +317,8 @@ class _LoginScreenState extends State<LoginScreen>
                               const SizedBox(height: 20),
                               _buildGoogleButton(auth),
                               const SizedBox(height: 24),
-                              const Divider(color: _borderDefault, thickness: 1),
+                              const Divider(
+                                  color: _borderDefault, thickness: 1),
                               const SizedBox(height: 16),
                               Center(
                                 child: RichText(
@@ -378,8 +390,8 @@ class _LoginScreenState extends State<LoginScreen>
           child: Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(
-                  color: _accentLight.withOpacity(0.5), width: 2.5),
+              border:
+                  Border.all(color: _accentLight.withOpacity(0.5), width: 2.5),
               gradient: const LinearGradient(
                 colors: [Color(0xFF2A5FC0), Color(0xFF0D1E3D)],
                 begin: Alignment.topLeft,
@@ -405,13 +417,9 @@ class _LoginScreenState extends State<LoginScreen>
         RichText(
           text: const TextSpan(
             style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.5),
+                fontSize: 30, fontWeight: FontWeight.w900, letterSpacing: -0.5),
             children: [
-              TextSpan(
-                  text: 'Pasada',
-                  style: TextStyle(color: _textPrimary)),
+              TextSpan(text: 'Pasada', style: TextStyle(color: _textPrimary)),
               TextSpan(text: 'Now', style: TextStyle(color: _orange)),
             ],
           ),
@@ -532,8 +540,7 @@ class _LoginScreenState extends State<LoginScreen>
       children: [
         const Icon(Icons.error_outline_rounded, size: 14, color: _errorRed),
         const SizedBox(width: 5),
-        Text(message,
-            style: const TextStyle(color: _errorRed, fontSize: 12)),
+        Text(message, style: const TextStyle(color: _errorRed, fontSize: 12)),
       ],
     );
   }
@@ -562,8 +569,8 @@ class _LoginScreenState extends State<LoginScreen>
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: EdgeInsets.zero,
         ),
         child: auth.isLoading
@@ -614,7 +621,6 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // ── Google button ─────────────────────────────────────────────────────────
   Widget _buildGoogleButton(AuthProvider auth) {
     return OutlinedButton(
       onPressed: auth.isLoading ? null : _handleGoogleLogin,
@@ -647,48 +653,33 @@ class _LoginScreenState extends State<LoginScreen>
   }
 }
 
-// ── Accurate Google "G" logo via CustomPaint ──────────────────────────────────
-// Matches the official logo: thick coloured ring with a gap at top-right,
-// plus the blue horizontal bar jutting right at mid-height.
+// ── Accurate Google "G" logo via CustomPaint ───────────────────────────────
 class _GoogleLogoPainter extends CustomPainter {
   static const double _pi = 3.1415926535897932;
   static double _rad(double deg) => deg * _pi / 180;
 
-  // Official Google brand colours
-  static const Color _red    = Color(0xFFEA4335);
-  static const Color _blue   = Color(0xFF4285F4);
+  static const Color _red = Color(0xFFEA4335);
+  static const Color _blue = Color(0xFF4285F4);
   static const Color _yellow = Color(0xFFFBBC05);
-  static const Color _green  = Color(0xFF34A853);
+  static const Color _green = Color(0xFF34A853);
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double cx       = size.width  / 2;
-    final double cy       = size.height / 2;
-    final double r        = size.width  / 2;
-    final Offset  center  = Offset(cx, cy);
+    final double cx = size.width / 2;
+    final double cy = size.height / 2;
+    final double r = size.width / 2;
+    final Offset center = Offset(cx, cy);
 
-    // Stroke thickness — ~20 % of diameter, matching the real logo
-    final double stroke   = r * 0.38;
-    final double innerR   = r - stroke;
-    final double midR     = innerR + stroke / 2; // arc centre radius
-
-    // ── Draw each coloured arc segment ────────────────────────────────────
-    // Angles: 0° = 3 o'clock, going clockwise.
-    // The gap in the ring sits roughly from -60° to 25° (top-right, where the
-    // horizontal bar enters). We split the remaining 295° among the 4 colours.
-    //
-    //  Red    : -60°  → ~97°   (top, wrapping through 12 o'clock)
-    //  Yellow :  97°  → 168°
-    //  Green  : 168°  → 252°
-    //  Blue   : 252°  → 300°   (short — bottom-right arc only)
+    final double stroke = r * 0.38;
+    final double innerR = r - stroke;
+    final double midR = innerR + stroke / 2;
 
     void arc(Color color, double startDeg, double sweepDeg) {
       final paint = Paint()
-        ..color       = color
-        ..style       = PaintingStyle.stroke
+        ..color = color
+        ..style = PaintingStyle.stroke
         ..strokeWidth = stroke
-        ..strokeCap   = StrokeCap.round;
-
+        ..strokeCap = StrokeCap.round;
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: midR),
         _rad(startDeg),
@@ -698,44 +689,39 @@ class _GoogleLogoPainter extends CustomPainter {
       );
     }
 
-    arc(_red,    -117, 160); // Red   — top-right → left, over 12 o'clock
-    arc(_yellow,   43, 77);  // Yellow — left side going down
-    arc(_green,   120, 82);  // Green  — bottom-left
-    arc(_blue,    202, 70);  // Blue   — bottom-right (short stub)
+    arc(_red, -117, 160);
+    arc(_yellow, 43, 77);
+    arc(_green, 120, 82);
+    arc(_blue, 202, 70);
 
-    // ── Horizontal blue bar (right arm of the "G") ────────────────────────
-    // Starts at the right edge of the inner circle, goes to the outer edge.
-    final double barH    = stroke * 0.82; // bar height ≈ stroke thickness
-    final double barLeft = cx;            // starts at centre-x
-    final double barRight= cx + r + 1;   // to right edge (slight overdraw)
-    final double barTop  = cy - barH / 2;
+    final double barH = stroke * 0.82;
+    final double barLeft = cx;
+    final double barRight = cx + r + 1;
+    final double barTop = cy - barH / 2;
 
-    final Paint barPaint = Paint()
-      ..color  = _blue
-      ..style  = PaintingStyle.fill;
-
-    // Rounded rectangle for the bar
     canvas.drawRRect(
       RRect.fromRectAndCorners(
         Rect.fromLTRB(barLeft, barTop, barRight, barTop + barH),
-        topRight:    Radius.circular(barH / 2),
+        topRight: Radius.circular(barH / 2),
         bottomRight: Radius.circular(barH / 2),
       ),
-      barPaint,
-    );
-
-    // Erase the inner circle area from the bar so it looks like a ring notch
-    canvas.drawCircle(center, innerR - 1, Paint()..color = Colors.transparent
-        ..blendMode = BlendMode.clear);
-
-    // ── Punch out the centre so background shows through ──────────────────
-    canvas.drawCircle(
-      center,
-      innerR - 1,
       Paint()
-        ..color    = Colors.transparent
-        ..blendMode = BlendMode.clear,
+        ..color = _blue
+        ..style = PaintingStyle.fill,
     );
+
+    canvas.drawCircle(
+        center,
+        innerR - 1,
+        Paint()
+          ..color = Colors.transparent
+          ..blendMode = BlendMode.clear);
+    canvas.drawCircle(
+        center,
+        innerR - 1,
+        Paint()
+          ..color = Colors.transparent
+          ..blendMode = BlendMode.clear);
   }
 
   @override

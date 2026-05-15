@@ -16,14 +16,3 @@ class Commuter(models.Model):
     class Meta:
         db_table = 'commuters'
         managed  = False
-
-
-class Report(models.Model):
-    ride_id     = models.IntegerField()
-    commuter    = models.ForeignKey(Commuter, on_delete=models.CASCADE, db_column='commuter_id')
-    reason      = models.TextField()
-    created_at  = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'reports'
-        managed  = False    

@@ -13,25 +13,39 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    @Autowired private AuthenticationManager authenticationManager;
-    @Autowired private CommuterRepository    commuterRepo;
-    @Autowired private DriverRepository      driverRepo;
-    @Autowired private PasswordEncoder       encoder;
-    @Autowired private JwtUtils              jwtUtils;
+    @Autowired
+    private AuthenticationManager authenticationManager;
+    @Autowired
+    private CommuterRepository commuterRepo;
+    @Autowired
+    private DriverRepository driverRepo;
+    @Autowired
+    private PasswordResetTokenRepository resetTokenRepo;
+    @Autowired
+    private PasswordEncoder encoder;
+    @Autowired
+    private JwtUtils jwtUtils;
+    @Autowired
+    private JavaMailSender mailSender;
 
     @Value("${jwt.expiration}")
     private int jwtExpirationMs;
@@ -41,6 +55,9 @@ public class AuthController {
 
     @Value("${google.client.id}")
     private String googleClientId;
+
+    @Value("${spring.mail.username}")
+    private String fromEmail;
 
     // ── Cookie helpers ────────────────────────────────────────────────────────
     private Cookie buildJwtCookie(String token) {
@@ -73,13 +90,13 @@ public class AuthController {
             String role;
             String verifiedStatus;
 
-            var commuter = commuterRepo.findByUsername(req.getUsername());
+            Optional<Commuter> commuter = commuterRepo.findByUsername(req.getUsername());
             if (commuter.isPresent()) {
-                role           = "ROLE_COMMUTER";
+                role = "ROLE_COMMUTER";
                 verifiedStatus = commuter.get().getVerifiedStatus();
             } else {
-                Driver d       = driverRepo.findByUsername(req.getUsername()).orElseThrow();
-                role           = "ROLE_DRIVER";
+                Driver d = driverRepo.findByUsername(req.getUsername()).orElseThrow();
+                role = "ROLE_DRIVER";
                 verifiedStatus = d.getVerifiedStatus();
             }
 
@@ -108,15 +125,13 @@ public class AuthController {
             boolean isAccessToken = Boolean.TRUE.equals(body.get("isAccessToken"));
 
             if (isAccessToken) {
-                // Web flow — idToken not available, use email sent directly from Flutter
-                email    = (String) body.get("email");
+                email = (String) body.get("email");
                 fullName = (String) body.get("displayName");
                 if (email == null) {
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                             .body(Map.of("message", "Missing email from Google."));
                 }
             } else {
-                // Mobile flow — verify ID token server-side
                 GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
                         new NetHttpTransport(), new GsonFactory())
                         .setAudience(Collections.singletonList(googleClientId))
@@ -129,13 +144,12 @@ public class AuthController {
                 }
 
                 GoogleIdToken.Payload payload = idToken.getPayload();
-                email    = payload.getEmail();
+                email = payload.getEmail();
                 fullName = (String) payload.get("name");
             }
 
             String username = email.split("@")[0];
 
-            // Look up existing commuter by email, or auto-create one
             Commuter commuter = commuterRepo.findByEmail(email).orElse(null);
 
             if (commuter == null) {
@@ -143,14 +157,12 @@ public class AuthController {
                         driverRepo.existsByUsername(username)) {
                     username = username + "_" + UUID.randomUUID().toString().substring(0, 5);
                 }
-
                 commuter = new Commuter(
                         username,
                         encoder.encode(UUID.randomUUID().toString()),
                         fullName != null ? fullName : username,
                         "",
-                        email
-                );
+                        email);
                 commuter.setVerifiedStatus("verified");
                 commuterRepo.save(commuter);
             }
@@ -162,8 +174,7 @@ public class AuthController {
                     jwt,
                     commuter.getUsername(),
                     "ROLE_COMMUTER",
-                    commuter.getVerifiedStatus()
-            ));
+                    commuter.getVerifiedStatus()));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -197,14 +208,20 @@ public class AuthController {
                     req.getFullName(), req.getPhone(), req.getEmail(),
                     req.getLicenseNo(), req.getPlateNo(), req.getTodaNo());
             driver.setVerifiedStatus("pending");
-            if (req.getAge()          != null) driver.setAge(req.getAge());
-            if (req.getAddress()      != null) driver.setAddress(req.getAddress());
-            if (req.getProfilePhoto() != null) driver.setProfilePhoto(req.getProfilePhoto());
-            if (req.getPhotoLicense() != null) driver.setPhotoLicense(req.getPhotoLicense());
-            if (req.getPhotoPlate()   != null) driver.setPhotoPlate(req.getPhotoPlate());
-            if (req.getPhotoToda()    != null) driver.setPhotoToda(req.getPhotoToda());
+            if (req.getAge() != null)
+                driver.setAge(req.getAge());
+            if (req.getAddress() != null)
+                driver.setAddress(req.getAddress());
+            if (req.getProfilePhoto() != null)
+                driver.setProfilePhoto(req.getProfilePhoto());
+            if (req.getPhotoLicense() != null)
+                driver.setPhotoLicense(req.getPhotoLicense());
+            if (req.getPhotoPlate() != null)
+                driver.setPhotoPlate(req.getPhotoPlate());
+            if (req.getPhotoToda() != null)
+                driver.setPhotoToda(req.getPhotoToda());
             driverRepo.save(driver);
-            role           = "ROLE_DRIVER";
+            role = "ROLE_DRIVER";
             verifiedStatus = "pending";
 
         } else {
@@ -212,21 +229,143 @@ public class AuthController {
                     req.getUsername(), encoder.encode(req.getPassword()),
                     req.getFullName(), req.getPhone(), req.getEmail());
             commuter.setVerifiedStatus("verified");
-            if (req.getAge()          != null) commuter.setAge(req.getAge());
-            if (req.getAddress()      != null) commuter.setAddress(req.getAddress());
-            if (req.getProfilePhoto() != null) commuter.setProfilePhoto(req.getProfilePhoto());
+            if (req.getAge() != null)
+                commuter.setAge(req.getAge());
+            if (req.getAddress() != null)
+                commuter.setAddress(req.getAddress());
+            if (req.getProfilePhoto() != null)
+                commuter.setProfilePhoto(req.getProfilePhoto());
             commuterRepo.save(commuter);
-            role           = "ROLE_COMMUTER";
+            role = "ROLE_COMMUTER";
             verifiedStatus = "verified";
         }
 
         jwt = jwtUtils.generateToken(req.getUsername());
         response.addCookie(buildJwtCookie(jwt));
         return ResponseEntity.ok(Map.of(
-                "token",          jwt,
-                "username",       req.getUsername(),
-                "role",           role,
+                "token", jwt,
+                "username", req.getUsername(),
+                "role", role,
                 "verifiedStatus", verifiedStatus));
+    }
+
+    // ── Forgot Password — Step 1: send OTP ───────────────────────────────────
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Email is required."));
+        }
+
+        // Explicit Optional types — avoids var inference issues
+        Optional<Commuter> foundCommuter = commuterRepo.findByEmail(email);
+        Optional<Driver> foundDriver = driverRepo.findByEmail(email);
+        boolean exists = foundCommuter.isPresent() || foundDriver.isPresent();
+
+        // Always return OK to avoid email enumeration attacks
+        if (!exists) {
+            return ResponseEntity.ok(
+                    Map.of("message", "If that email is registered, you will receive an OTP."));
+        }
+
+        // Delete any previous tokens for this email
+        resetTokenRepo.deleteAllByEmail(email);
+
+        // Generate a 6-digit OTP, valid for 15 minutes
+        String otp = String.format("%06d", new Random().nextInt(1_000_000));
+        Instant expiresAt = Instant.now().plusSeconds(15 * 60);
+        resetTokenRepo.save(new PasswordResetToken(email, otp, expiresAt));
+
+        // Send email
+        try {
+            SimpleMailMessage msg = new SimpleMailMessage();
+            msg.setFrom(fromEmail);
+            msg.setTo(email);
+            msg.setSubject("PasadaNow — Password Reset OTP");
+            msg.setText(
+                    "Your OTP for resetting your PasadaNow password is:\n\n"
+                            + "  " + otp + "\n\n"
+                            + "This code expires in 15 minutes. Do not share it with anyone.\n\n"
+                            + "If you did not request a password reset, you can ignore this email.");
+            mailSender.send(msg);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to send OTP email. Please try again."));
+        }
+
+        return ResponseEntity.ok(
+                Map.of("message", "If that email is registered, you will receive an OTP."));
+    }
+
+    // ── Reset Password — Step 2: verify OTP + set new password ───────────────
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        String otp = body.get("otp");
+        String newPassword = body.get("newPassword");
+
+        if (email == null || otp == null || newPassword == null
+                || email.isBlank() || otp.isBlank() || newPassword.isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Email, OTP, and new password are required."));
+        }
+
+        if (newPassword.length() < 6) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Password must be at least 6 characters."));
+        }
+
+        Optional<PasswordResetToken> tokenOpt = resetTokenRepo.findTopByEmailOrderByExpiresAtDesc(email);
+
+        if (tokenOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "No OTP found for this email. Please request again."));
+        }
+
+        PasswordResetToken token = tokenOpt.get();
+
+        if (token.isUsed()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "This OTP has already been used."));
+        }
+
+        if (Instant.now().isAfter(token.getExpiresAt())) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "OTP has expired. Please request a new one."));
+        }
+
+        if (!token.getOtp().equals(otp)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Incorrect OTP. Please try again."));
+        }
+
+        // Mark token as used
+        token.setUsed(true);
+        resetTokenRepo.save(token);
+
+        // Explicit Optional types — avoids var inference issues
+        String encodedPassword = encoder.encode(newPassword);
+        Optional<Commuter> commuter = commuterRepo.findByEmail(email);
+
+        if (commuter.isPresent()) {
+            commuter.get().setPassword(encodedPassword);
+            commuterRepo.save(commuter.get());
+        } else {
+            Optional<Driver> driver = driverRepo.findByEmail(email);
+            if (driver.isPresent()) {
+                driver.get().setPassword(encodedPassword);
+                driverRepo.save(driver.get());
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Account not found."));
+            }
+        }
+
+        // Clean up used tokens
+        resetTokenRepo.deleteAllByEmail(email);
+
+        return ResponseEntity.ok(Map.of("message", "Password reset successfully."));
     }
 
     // ── Logout ────────────────────────────────────────────────────────────────
@@ -246,18 +385,19 @@ public class AuthController {
         }
 
         String username = auth.getName();
-        var commuter = commuterRepo.findByUsername(username);
+
+        Optional<Commuter> commuter = commuterRepo.findByUsername(username);
         if (commuter.isPresent()) {
             return ResponseEntity.ok(Map.of(
-                    "username",       username,
-                    "role",           "ROLE_COMMUTER",
+                    "username", username,
+                    "role", "ROLE_COMMUTER",
                     "verifiedStatus", commuter.get().getVerifiedStatus()));
         }
 
         Driver d = driverRepo.findByUsername(username).orElseThrow();
         return ResponseEntity.ok(Map.of(
-                "username",       username,
-                "role",           "ROLE_DRIVER",
+                "username", username,
+                "role", "ROLE_DRIVER",
                 "verifiedStatus", d.getVerifiedStatus()));
     }
 }

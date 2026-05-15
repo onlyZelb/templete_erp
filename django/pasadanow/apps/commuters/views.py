@@ -1,8 +1,9 @@
+import bcrypt
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
-from .models import Commuter, Report
+from .models import Commuter
 
 
 @api_view(['GET'])
@@ -84,34 +85,41 @@ class CommuterProfileView(APIView):
             return Response({'detail': str(e)}, status=500)
 
 
-class RideReportView(APIView):
-    def post(self, request, ride_id):
+class CommuterChangePasswordView(APIView):
+    def post(self, request):
         try:
             username = _get_username(request)
             if not username:
                 return Response({'detail': 'no username in token'}, status=401)
 
+            current_password = request.data.get('current_password')
+            new_password = request.data.get('new_password')
+
+            if not current_password or not new_password:
+                return Response({'detail': 'Both fields are required.'}, status=400)
+
+            if len(new_password) < 6:
+                return Response({'detail': 'Password must be at least 6 characters.'}, status=400)
+
             commuter = Commuter.objects.get(username=username)
 
-            reason = request.data.get('reason', '').strip()
-            if not reason:
-                return Response({'detail': 'Reason is required'}, status=400)
+            # Spring Boot uses BCrypt — verify with bcrypt directly
+            if not bcrypt.checkpw(
+                current_password.encode('utf-8'),
+                commuter.password.encode('utf-8')
+            ):
+                return Response({'detail': 'Current password is incorrect.'}, status=400)
 
-            report = Report.objects.create(
-                ride_id  = ride_id,
-                commuter = commuter,
-                reason   = reason,
-            )
+            # Hash new password with BCrypt so Spring Boot can still read it
+            hashed = bcrypt.hashpw(
+                new_password.encode('utf-8'),
+                bcrypt.gensalt()
+            ).decode('utf-8')
 
-            return Response({
-                'id':          report.id,
-                'ride_id':     report.ride_id,
-                'commuter_id': commuter.id,
-                'reason':      report.reason,
-                'created_at':  report.created_at,
-            }, status=201)
-
+            commuter.password = hashed
+            commuter.save(update_fields=['password'])
+            return Response({'message': 'Password changed successfully.'})
         except Commuter.DoesNotExist:
-            return Response({'detail': 'commuter not found'}, status=404)
+            return Response({'detail': 'Commuter not found.'}, status=404)
         except Exception as e:
             return Response({'detail': str(e)}, status=500)

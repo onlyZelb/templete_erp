@@ -41,8 +41,10 @@ public class SecurityConfig {
                                 "/api/auth/login",
                                 "/api/auth/register",
                                 "/api/auth/logout",
-                                "/api/auth/google")          // ← Google endpoint is public
-                        .permitAll()
+                                "/api/auth/google",
+                                "/api/auth/forgot-password", // ← new
+                                "/api/auth/reset-password" // ← new
+                        ).permitAll()
                         .requestMatchers("/ws/chat", "/ws/chat/**").permitAll()
                         .requestMatchers("/api/chat/**").permitAll()
                         .requestMatchers("/error", "/actuator/**").permitAll()
@@ -60,7 +62,6 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        // CORS is handled by the API Gateway — empty config here
         return new UrlBasedCorsConfigurationSource();
     }
 }

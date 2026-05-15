@@ -19,15 +19,19 @@ class RideController
 
         $commuterId = $this->getCommuterId($user->sub);
 
+        // ── FIX: use the fare/distance sent by the Flutter app ────────────
         $distanceKm = isset($data['distance_km']) ? (float) $data['distance_km'] : 0.0;
         $fare = ($distanceKm > 0)
             ? $this->computeFare($distanceKm)
             : (float) ($data['fare'] ?? 25.50);
+        // ─────────────────────────────────────────────────────────────────
 
+        // ── resolve driver_id from the request ────────────────────────────
         $driverId = null;
         if (!empty($data['driver_id'])) {
             $driverId = (int) $data['driver_id'];
         }
+        // ─────────────────────────────────────────────────────────────────
 
         $stmt = $this->db->prepare("
             INSERT INTO rides (commuter_id, driver_id, pickup_location, destination, fare, distance_km, status)
@@ -86,8 +90,8 @@ class RideController
 
     public function fareEstimate(): void
     {
-        $distanceKm = isset($_GET['distance_km']) ? (float) $_GET['distance_km'] : 0.0;
-        $fare       = $this->computeFare($distanceKm);
+        $distanceKm  = isset($_GET['distance_km']) ? (float) $_GET['distance_km'] : 0.0;
+        $fare        = $this->computeFare($distanceKm);
         echo json_encode(['fare' => $fare]);
     }
 
@@ -142,48 +146,6 @@ class RideController
             'lng' => $data['lng'],
             'id'  => $id,
         ]);
-        echo json_encode($stmt->fetch(PDO::FETCH_ASSOC));
-    }
-
-    // POST /rides/{id}/report — commuter reports a ride
-    public function submitReport(object $user, int $rideId): void
-    {
-        $commuterId = $this->getCommuterId($user->sub);
-
-        $data   = json_decode(file_get_contents('php://input'), true);
-        $reason = trim($data['reason'] ?? '');
-
-        if ($reason === '') {
-            http_response_code(400);
-            echo json_encode(['error' => 'Reason is required']);
-            return;
-        }
-
-        // Verify the ride belongs to this commuter
-        $stmt = $this->db->prepare("
-            SELECT id FROM rides
-            WHERE id = :ride_id AND commuter_id = :commuter_id
-        ");
-        $stmt->execute(['ride_id' => $rideId, 'commuter_id' => $commuterId]);
-
-        if (!$stmt->fetch()) {
-            http_response_code(403);
-            echo json_encode(['error' => 'Ride not found or access denied']);
-            return;
-        }
-
-        $stmt = $this->db->prepare("
-            INSERT INTO reports (ride_id, commuter_id, reason, created_at)
-            VALUES (:ride_id, :commuter_id, :reason, NOW())
-            RETURNING id, ride_id, commuter_id, reason, created_at
-        ");
-        $stmt->execute([
-            'ride_id'     => $rideId,
-            'commuter_id' => $commuterId,
-            'reason'      => $reason,
-        ]);
-
-        http_response_code(201);
         echo json_encode($stmt->fetch(PDO::FETCH_ASSOC));
     }
 
@@ -270,10 +232,11 @@ class RideController
         return (int) $commuter['id'];
     }
 
+    // ── FIX: compute fare from real distance instead of hardcoded 3.0 km ─
     private function computeFare(float $distanceKm): float
     {
         $baseFare  = 15.00;
-        $ratePerKm = 8.00;
+        $ratePerKm = 8.00;   // matches Flutter formula: 15 + (km × 8)
         return round($baseFare + ($ratePerKm * $distanceKm), 2);
     }
 }

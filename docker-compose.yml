@@ -62,6 +62,8 @@ services:
       - JWT_SECRET=Zm9ydHktdHdvLWlzLXRoZS1hbnN3ZXItdG8tbGlmZS10aGUtdW5pdmVyc2UtYW5kLWV2ZXJ5dGhpbmc=
       - SPRING_DEVTOOLS_RESTART_ENABLED=true
       - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/pasadanow_chat
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
     volumes:
       - ./backend:/app
       - ~/.m2:/root/.m2

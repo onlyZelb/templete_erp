@@ -1,3 +1,4 @@
+import bcrypt
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound, PermissionDenied
@@ -121,6 +122,44 @@ class DriverProfileUpdateView(APIView):
 
         driver.save(update_fields=[*updated_fields, 'updated_at'])
         return Response(_profile_response(driver))
+
+
+class DriverChangePasswordView(APIView):
+    def post(self, request):
+        try:
+            username = get_username(request)
+            if not username:
+                return Response({'detail': 'no username in token'}, status=401)
+
+            current_password = request.data.get('current_password')
+            new_password = request.data.get('new_password')
+
+            if not current_password or not new_password:
+                return Response({'detail': 'Both fields are required.'}, status=400)
+
+            if len(new_password) < 6:
+                return Response({'detail': 'Password must be at least 6 characters.'}, status=400)
+
+            driver = get_driver(username)
+
+            # Spring Boot uses BCrypt — verify with bcrypt directly
+            if not bcrypt.checkpw(
+                current_password.encode('utf-8'),
+                driver.password.encode('utf-8')
+            ):
+                return Response({'detail': 'Current password is incorrect.'}, status=400)
+
+            # Hash new password with BCrypt so Spring Boot can still read it
+            hashed = bcrypt.hashpw(
+                new_password.encode('utf-8'),
+                bcrypt.gensalt()
+            ).decode('utf-8')
+
+            driver.password = hashed
+            driver.save(update_fields=['password'])
+            return Response({'message': 'Password changed successfully.'})
+        except Exception as e:
+            return Response({'detail': str(e)}, status=500)
 
 
 class DriverPhotoView(APIView):

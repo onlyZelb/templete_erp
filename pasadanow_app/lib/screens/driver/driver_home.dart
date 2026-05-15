@@ -11,144 +11,64 @@ import '../../providers/auth_provider.dart';
 import '../../core/api_client.dart';
 import '../../core/constants.dart';
 import '../../widgets/chat_widget.dart';
+import '../../core/notification_service.dart';
 import '../login_screen.dart';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// RESPONSIVE HELPER
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _Responsive {
-  static bool isCompact(BuildContext ctx) =>
-      MediaQuery.of(ctx).size.width < 400;
-
-  static double appBarHeight(BuildContext ctx) =>
-      isCompact(ctx) ? 60 : 72;
-
-  static double avatarRadius(BuildContext ctx) =>
-      isCompact(ctx) ? 14 : 16;
-
-  static double logoSize(BuildContext ctx) =>
-      isCompact(ctx) ? 34 : 40;
-
-  static double titleFontSize(BuildContext ctx) =>
-      isCompact(ctx) ? 16 : 19;
-
-  static double subtitleFontSize(BuildContext ctx) =>
-      isCompact(ctx) ? 9.5 : 11;
-}
-
-Color _o(Color c, double a) => c.withValues(alpha: a);
-
-class _IC {
-  static const person = Icons.person_outline_rounded;
-  static const badge = Icons.badge_outlined;
-  static const role = Icons.verified_user_outlined;
-  static const phone = Icons.phone_outlined;
-  static const email = Icons.email_outlined;
-  static const location = Icons.location_on_outlined;
-  static const age = Icons.cake_outlined;
-  static const car = Icons.directions_car_outlined;
-  static const gpsOn = Icons.gps_fixed;
-  static const gpsOff = Icons.gps_off;
-  static const speed = Icons.speed_outlined;
-  static const accuracy = Icons.radar_outlined;
-  static const dashboard = Icons.map_outlined;
-  static const earnings = Icons.account_balance_wallet_outlined;
-  static const profile = Icons.account_circle_outlined;
-  static const notification = Icons.notifications_outlined;
-  static const refresh = Icons.refresh_rounded;
-  static const cancel = Icons.cancel_outlined;
-  static const signOut = Icons.logout_rounded;
-  static const settings = Icons.settings_outlined;
-  static const wallet = Icons.account_balance_wallet_outlined;
-  static const receipt = Icons.receipt_outlined;
-  static const check = Icons.check_circle_outline_rounded;
-  static const camera = Icons.camera_alt_rounded;
-  static const edit = Icons.edit_outlined;
-  static const save = Icons.save_outlined;
-  static const online = Icons.wifi_outlined;
-  static const offline = Icons.wifi_off_outlined;
-  static const plate = Icons.pin_outlined;
-  static const license = Icons.credit_card_outlined;
-  static const org = Icons.store_outlined;
-  static const flag = Icons.flag_outlined;
-  static const bolt = Icons.bolt;
-  static const priceChange = Icons.price_change_outlined;
-  static const tripCount = Icons.route_outlined;
-  static const totalEarnings = Icons.bar_chart_outlined;
-  static const todayEarnings = Icons.today_outlined;
-  static const folder = Icons.folder_outlined;
-  static const lock = Icons.lock_outline_rounded;
-  static const manage = Icons.manage_accounts_outlined;
-  static const pickup = Icons.radio_button_checked;
-  static const dropoff = Icons.location_on;
-  static const chat = Icons.chat_bubble_outline_rounded;
-  static const send = Icons.send_rounded;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THEME COLORS
 // ─────────────────────────────────────────────────────────────────────────────
 
-class DriverThemeColors {
+class AppThemeColors {
   final Color bgDeep;
-  final Color bgLight;
-  final Color card;
-  final Color border;
+  final Color bgCard;
   final Color accent;
   final Color green;
   final Color orange;
   final Color red;
-  final Color purple;
   final Color textPrimary;
   final Color textMuted;
+  final Color border;
   final Color appBarBg;
   final Color mapOverlayBg;
 
-  const DriverThemeColors({
+  const AppThemeColors({
     required this.bgDeep,
-    required this.bgLight,
-    required this.card,
-    required this.border,
+    required this.bgCard,
     required this.accent,
     required this.green,
     required this.orange,
     required this.red,
-    required this.purple,
     required this.textPrimary,
     required this.textMuted,
+    required this.border,
     required this.appBarBg,
     required this.mapOverlayBg,
   });
 
-  static const dark = DriverThemeColors(
+  static const dark = AppThemeColors(
     bgDeep: Color(0xFF0B1B35),
-    bgLight: Color(0xFF0D1E35),
-    card: Color(0xFF102245),
-    border: Color(0xFF1E3A6E),
+    bgCard: Color(0xFF102245),
     accent: Color(0xFF3D7FD4),
-    green: Color(0xFF1DBE74),
-    orange: Color(0xFFF4A620),
+    green: Color(0xFF22C55E),
+    orange: Color(0xFFE8863A),
     red: Color(0xFFEF4444),
-    purple: Color(0xFFA855F7),
     textPrimary: Color(0xFFE8EEF7),
-    textMuted: Color(0xFF6B8BA4),
-    appBarBg: Color(0xFF081422),
+    textMuted: Color(0xFF8A9BC0),
+    border: Color(0xFF1E3A6E),
+    appBarBg: Color(0xFF0D1A30),
     mapOverlayBg: Color(0xFF0D1A30),
   );
 
-  static const light = DriverThemeColors(
+  static const light = AppThemeColors(
     bgDeep: Color(0xFFF0F4FA),
-    bgLight: Color(0xFFFFFFFF),
-    card: Color(0xFFFFFFFF),
-    border: Color(0xFFCBD5E1),
+    bgCard: Color(0xFFFFFFFF),
     accent: Color(0xFF2563EB),
     green: Color(0xFF16A34A),
     orange: Color(0xFFD97706),
     red: Color(0xFFDC2626),
-    purple: Color(0xFF9333EA),
     textPrimary: Color(0xFF0F172A),
     textMuted: Color(0xFF64748B),
+    border: Color(0xFFCBD5E1),
     appBarBg: Color(0xFFFFFFFF),
     mapOverlayBg: Color(0xFFFFFFFF),
   );
@@ -158,11 +78,11 @@ class DriverThemeColors {
 // THEME PROVIDER
 // ─────────────────────────────────────────────────────────────────────────────
 
-class DriverThemeProvider extends ChangeNotifier {
+class ThemeProvider extends ChangeNotifier {
   bool _isDark = true;
   bool get isDark => _isDark;
-  DriverThemeColors get colors =>
-      _isDark ? DriverThemeColors.dark : DriverThemeColors.light;
+  AppThemeColors get colors =>
+      _isDark ? AppThemeColors.dark : AppThemeColors.light;
 
   void toggle() {
     _isDark = !_isDark;
@@ -171,470 +91,7 @@ class DriverThemeProvider extends ChangeNotifier {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NOTIFICATION SYSTEM
-// ─────────────────────────────────────────────────────────────────────────────
-
-enum NotifType {
-  info,
-  rideRequest,
-  rideAccepted,
-  rideDeclined,
-  rideCompleted,
-  rideEarned,
-  gpsLost,
-  surgeActive,
-  driverOnline,
-  driverOffline,
-}
-
-class AppNotification {
-  final NotifType type;
-  final String title;
-  final String body;
-  final DateTime timestamp;
-  bool read;
-
-  AppNotification({
-    required this.type,
-    required this.title,
-    required this.body,
-    DateTime? timestamp,
-    this.read = false,
-  }) : timestamp = timestamp ?? DateTime.now();
-
-  factory AppNotification.driverOnline() => AppNotification(
-        type: NotifType.driverOnline,
-        title: 'You\'re Online 🟢',
-        body: 'You\'re now visible to commuters. Waiting for ride requests.',
-      );
-
-  factory AppNotification.driverOffline() => AppNotification(
-        type: NotifType.driverOffline,
-        title: 'You\'re Offline',
-        body: 'You won\'t receive ride requests while offline.',
-      );
-
-  factory AppNotification.newRideRequest(
-          String passenger, String pickup, String fare) =>
-      AppNotification(
-        type: NotifType.rideRequest,
-        title: 'New Ride Request! 🚗',
-        body: '$passenger needs a ride from $pickup · Est. $fare',
-      );
-
-  factory AppNotification.rideEarned(String amount) => AppNotification(
-        type: NotifType.rideEarned,
-        title: 'Earnings Updated 💰',
-        body: 'You earned $amount from this ride. Keep it up!',
-      );
-
-  IconData get icon {
-    switch (type) {
-      case NotifType.rideRequest:
-        return Icons.directions_car_outlined;
-      case NotifType.rideAccepted:
-        return Icons.check_circle_outline_rounded;
-      case NotifType.rideDeclined:
-        return Icons.cancel_outlined;
-      case NotifType.rideCompleted:
-        return Icons.flag_circle_outlined;
-      case NotifType.rideEarned:
-        return Icons.account_balance_wallet_outlined;
-      case NotifType.gpsLost:
-        return Icons.gps_off;
-      case NotifType.surgeActive:
-        return Icons.bolt;
-      case NotifType.driverOnline:
-        return Icons.wifi_outlined;
-      case NotifType.driverOffline:
-        return Icons.wifi_off_outlined;
-      case NotifType.info:
-      default:
-        return Icons.info_outline_rounded;
-    }
-  }
-
-  Color get color {
-    switch (type) {
-      case NotifType.rideRequest:
-        return const Color(0xFF3D7FD4);
-      case NotifType.rideAccepted:
-        return const Color(0xFF1DBE74);
-      case NotifType.rideDeclined:
-        return const Color(0xFFEF4444);
-      case NotifType.rideCompleted:
-        return const Color(0xFF1DBE74);
-      case NotifType.rideEarned:
-        return const Color(0xFF1DBE74);
-      case NotifType.gpsLost:
-        return const Color(0xFFF4A620);
-      case NotifType.surgeActive:
-        return const Color(0xFFF4A620);
-      case NotifType.driverOnline:
-        return const Color(0xFF1DBE74);
-      case NotifType.driverOffline:
-        return const Color(0xFF6B8BA4);
-      case NotifType.info:
-      default:
-        return const Color(0xFF3D7FD4);
-    }
-  }
-
-  String get timeAgo {
-    final diff = DateTime.now().difference(timestamp);
-    if (diff.inSeconds < 60) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return '${diff.inDays}d ago';
-  }
-}
-
-class NotificationService extends ChangeNotifier {
-  final List<AppNotification> _items = [];
-
-  List<AppNotification> get all =>
-      List.unmodifiable(_items.reversed.toList());
-  int get unreadCount => _items.where((n) => !n.read).length;
-  bool get hasUnread => unreadCount > 0;
-
-  void add(AppNotification notif) {
-    _items.add(notif);
-    notifyListeners();
-  }
-
-  void markAllRead() {
-    for (final n in _items) n.read = true;
-    notifyListeners();
-  }
-
-  void clear() {
-    _items.clear();
-    notifyListeners();
-  }
-
-  void remove(AppNotification notif) {
-    _items.remove(notif);
-    notifyListeners();
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// NOTIFICATION BELL
-// ─────────────────────────────────────────────────────────────────────────────
-
-class NotificationBell extends StatelessWidget {
-  final NotificationService service;
-  final Color iconColor;
-  final Color badgeColor;
-  final DriverThemeColors themeColors;
-
-  const NotificationBell({
-    super.key,
-    required this.service,
-    required this.iconColor,
-    required this.badgeColor,
-    required this.themeColors,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: service,
-      builder: (_, __) {
-        final count = service.unreadCount;
-        return GestureDetector(
-          onTap: () => _showPanel(context),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Icon(_IC.notification, color: iconColor, size: 20),
-              if (count > 0)
-                Positioned(
-                  right: -4,
-                  top: -4,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: badgeColor,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                          color: themeColors.bgLight, width: 1.5),
-                    ),
-                    constraints:
-                        const BoxConstraints(minWidth: 14, minHeight: 14),
-                    child: Text(
-                      count > 9 ? '9+' : '$count',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 7,
-                        fontWeight: FontWeight.w800,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showPanel(BuildContext context) {
-    service.markAllRead();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) =>
-          _NotificationPanel(service: service, themeColors: themeColors),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// NOTIFICATION PANEL
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _NotificationPanel extends StatelessWidget {
-  final NotificationService service;
-  final DriverThemeColors themeColors;
-  const _NotificationPanel(
-      {required this.service, required this.themeColors});
-
-  @override
-  Widget build(BuildContext context) {
-    final t = themeColors;
-    return AnimatedBuilder(
-      animation: service,
-      builder: (_, __) {
-        final notifs = service.all;
-        return DraggableScrollableSheet(
-          initialChildSize: 0.55,
-          minChildSize: 0.3,
-          maxChildSize: 0.9,
-          builder: (_, scrollCtrl) => Container(
-            decoration: BoxDecoration(
-              color: t.bgLight,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(20)),
-              border: Border.all(color: t.border, width: 1.5),
-            ),
-            child: Column(
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(top: 10, bottom: 4),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: _o(t.textMuted, 0.4),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 8),
-                  child: Row(
-                    children: [
-                      Icon(_IC.notification, color: t.accent, size: 18),
-                      const SizedBox(width: 8),
-                      Text('Notifications',
-                          style: TextStyle(
-                            color: t.textPrimary,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          )),
-                      if (notifs.isNotEmpty) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 7, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _o(t.accent, 0.15),
-                            borderRadius: BorderRadius.circular(10),
-                            border:
-                                Border.all(color: _o(t.accent, 0.3)),
-                          ),
-                          child: Text('${notifs.length}',
-                              style: TextStyle(
-                                  color: t.accent,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700)),
-                        ),
-                      ],
-                      const Spacer(),
-                      if (notifs.isNotEmpty)
-                        GestureDetector(
-                          onTap: service.clear,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: _o(t.red, 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                  color: _o(t.red, 0.25)),
-                            ),
-                            child: Text('Clear all',
-                                style: TextStyle(
-                                    color: t.red,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600)),
-                          ),
-                        ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Icon(Icons.close,
-                            color: t.textMuted, size: 20),
-                      ),
-                    ],
-                  ),
-                ),
-                Divider(color: t.border, height: 1),
-                Expanded(
-                  child: notifs.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(_IC.notification,
-                                  color: _o(t.textMuted, 0.35),
-                                  size: 44),
-                              const SizedBox(height: 10),
-                              Text('No notifications yet',
-                                  style: TextStyle(
-                                      color: t.textMuted,
-                                      fontSize: 14)),
-                              const SizedBox(height: 4),
-                              Text('Ride updates will appear here',
-                                  style: TextStyle(
-                                      color: t.textMuted,
-                                      fontSize: 11)),
-                            ],
-                          ),
-                        )
-                      : ListView.separated(
-                          controller: scrollCtrl,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 10),
-                          itemCount: notifs.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 8),
-                          itemBuilder: (_, i) => _NotifTile(
-                              notif: notifs[i],
-                              service: service,
-                              themeColors: t),
-                        ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _NotifTile extends StatelessWidget {
-  final AppNotification notif;
-  final NotificationService service;
-  final DriverThemeColors themeColors;
-
-  const _NotifTile(
-      {required this.notif,
-      required this.service,
-      required this.themeColors});
-
-  @override
-  Widget build(BuildContext context) {
-    final t = themeColors;
-    final color = notif.color;
-    return Dismissible(
-      key: ValueKey(notif.timestamp),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 16),
-        decoration: BoxDecoration(
-          color: _o(t.red, 0.15),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child:
-            Icon(Icons.delete_outline_rounded, color: t.red, size: 20),
-      ),
-      onDismissed: (_) => service.remove(notif),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: notif.read ? t.card : _o(color, 0.07),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: notif.read ? t.border : _o(color, 0.35),
-            width: notif.read ? 1.0 : 1.5,
-          ),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: _o(color, 0.15),
-                shape: BoxShape.circle,
-                border: Border.all(color: _o(color, 0.3)),
-              ),
-              child: Icon(notif.icon, color: color, size: 17),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Expanded(
-                      child: Text(notif.title,
-                          style: TextStyle(
-                            color: t.textPrimary,
-                            fontSize: 12,
-                            fontWeight: notif.read
-                                ? FontWeight.w600
-                                : FontWeight.w800,
-                          )),
-                    ),
-                    if (!notif.read)
-                      Container(
-                        width: 7,
-                        height: 7,
-                        margin:
-                            const EdgeInsets.only(left: 6, top: 2),
-                        decoration: BoxDecoration(
-                            color: color, shape: BoxShape.circle),
-                      ),
-                  ]),
-                  const SizedBox(height: 3),
-                  Text(notif.body,
-                      style: TextStyle(
-                          color: t.textMuted, fontSize: 11)),
-                  const SizedBox(height: 5),
-                  Text(notif.timeAgo,
-                      style: TextStyle(
-                          color: _o(t.textMuted, 0.6),
-                          fontSize: 9,
-                          fontStyle: FontStyle.italic)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// FARE CONFIG
+// FARE CONFIG MODEL
 // ─────────────────────────────────────────────────────────────────────────────
 
 class FareConfig {
@@ -664,16 +121,15 @@ class FareConfig {
       );
 
   factory FareConfig.fromJson(Map<String, dynamic> json) {
-    double d(dynamic v, double fallback) =>
+    double _d(dynamic v, double fallback) =>
         v == null ? fallback : (double.tryParse(v.toString()) ?? fallback);
     return FareConfig(
-      baseFare: d(json['base_fare'], 15.0),
-      perKmRate: d(json['per_km_rate'], 8.0),
-      minimumFare: d(json['minimum_fare'], 15.0),
-      bookingFee: d(json['booking_fee'], 0.0),
-      surgeMultiplier: d(json['surge_multiplier'], 1.0),
-      surgeEnabled:
-          json['surge_enabled'] == true || json['surge_enabled'] == 1,
+      baseFare: _d(json['base_fare'], 15.0),
+      perKmRate: _d(json['per_km_rate'], 8.0),
+      minimumFare: _d(json['minimum_fare'], 15.0),
+      bookingFee: _d(json['booking_fee'], 0.0),
+      surgeMultiplier: _d(json['surge_multiplier'], 1.0),
+      surgeEnabled: json['surge_enabled'] == true || json['surge_enabled'] == 1,
     );
   }
 
@@ -689,7 +145,7 @@ class FareConfig {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DATA MODELS
+// DATA MODEL
 // ─────────────────────────────────────────────────────────────────────────────
 
 class RideRequest {
@@ -728,18 +184,24 @@ class RideRequest {
         ? fareRaw.toDouble()
         : double.tryParse(fareRaw?.toString() ?? '0') ?? 0.0;
 
-    final passengerName =
-        json['passenger_name']?.toString().isNotEmpty == true
-            ? json['passenger_name'].toString()
-            : json['commuter_name']?.toString().isNotEmpty == true
-                ? json['commuter_name'].toString()
-                : json['name']?.toString().isNotEmpty == true
-                    ? json['name'].toString()
-                    : json['username']?.toString().isNotEmpty == true
-                        ? json['username'].toString()
-                        : json['full_name']?.toString().isNotEmpty == true
-                            ? json['full_name'].toString()
-                            : 'Passenger';
+    final passengerName = json['passenger_name']?.toString()?.isNotEmpty == true
+        ? json['passenger_name'].toString()
+        : json['commuter_name']?.toString()?.isNotEmpty == true
+            ? json['commuter_name'].toString()
+            : json['name']?.toString()?.isNotEmpty == true
+                ? json['name'].toString()
+                : json['username']?.toString()?.isNotEmpty == true
+                    ? json['username'].toString()
+                    : json['user_name']?.toString()?.isNotEmpty == true
+                        ? json['user_name'].toString()
+                        : json['commuter']?.toString()?.isNotEmpty == true
+                            ? json['commuter'].toString()
+                            : json['full_name']?.toString()?.isNotEmpty == true
+                                ? json['full_name'].toString()
+                                : json['rider_name']?.toString()?.isNotEmpty ==
+                                        true
+                                    ? json['rider_name'].toString()
+                                    : 'Passenger';
 
     final distRaw = json['distance_km'] ??
         json['distance'] ??
@@ -750,23 +212,21 @@ class RideRequest {
         ? distRaw.toDouble()
         : double.tryParse(distRaw?.toString() ?? '0') ?? 0.0;
 
-    final pickupLabel =
-        json['pickup_location']?.toString().isNotEmpty == true
-            ? json['pickup_location'].toString()
-            : json['pickup_label']?.toString().isNotEmpty == true
-                ? json['pickup_label'].toString()
-                : json['pickup']?.toString().isNotEmpty == true
-                    ? json['pickup'].toString()
-                    : json['from']?.toString() ?? '';
+    final pickupLabel = json['pickup_location']?.toString()?.isNotEmpty == true
+        ? json['pickup_location'].toString()
+        : json['pickup_label']?.toString()?.isNotEmpty == true
+            ? json['pickup_label'].toString()
+            : json['pickup']?.toString()?.isNotEmpty == true
+                ? json['pickup'].toString()
+                : json['from']?.toString() ?? '';
 
-    final dropoffLabel =
-        json['destination']?.toString().isNotEmpty == true
-            ? json['destination'].toString()
-            : json['dropoff_label']?.toString().isNotEmpty == true
-                ? json['dropoff_label'].toString()
-                : json['dropoff']?.toString().isNotEmpty == true
-                    ? json['dropoff'].toString()
-                    : json['to']?.toString() ?? '';
+    final dropoffLabel = json['destination']?.toString()?.isNotEmpty == true
+        ? json['destination'].toString()
+        : json['dropoff_label']?.toString()?.isNotEmpty == true
+            ? json['dropoff_label'].toString()
+            : json['dropoff']?.toString()?.isNotEmpty == true
+                ? json['dropoff'].toString()
+                : json['to']?.toString() ?? '';
 
     return RideRequest(
       id: (json['id'] as num).toInt(),
@@ -783,6 +243,10 @@ class RideRequest {
   bool get hasValidPickup => pickup.latitude != 0 || pickup.longitude != 0;
   bool get hasValidDropoff => dropoff.latitude != 0 || dropoff.longitude != 0;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DRIVER PROFILE MODEL
+// ─────────────────────────────────────────────────────────────────────────────
 
 class DriverProfile {
   final String username;
@@ -820,26 +284,24 @@ class DriverProfile {
   factory DriverProfile.fromJson(Map<String, dynamic> json) {
     return DriverProfile(
       username: json['username']?.toString() ?? '',
-      fullName: json['full_name']?.toString() ??
-          json['fullName']?.toString() ?? '',
-      phone: json['phone']?.toString() ??
-          json['contact']?.toString() ?? '',
+      fullName:
+          json['full_name']?.toString() ?? json['fullName']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? json['contact']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       address: json['address']?.toString() ?? '',
       age: json['age']?.toString() ?? '',
       plateNumber: json['plate_number']?.toString() ?? '',
       licenseNumber: json['license_number']?.toString() ?? '',
       organization: json['organization']?.toString() ?? '',
-      contact: json['contact']?.toString() ??
-          json['phone']?.toString() ?? '',
-      profilePhotoUrl: json['profile_photo']?.toString() ??
-          json['profilePhoto']?.toString(),
-      licensePhotoUrl: json['photo_license']?.toString() ??
-          json['licensePhoto']?.toString(),
-      vehiclePhotoUrl: json['photo_plate']?.toString() ??
-          json['vehiclePhoto']?.toString(),
-      todaPhotoUrl: json['photo_toda']?.toString() ??
-          json['todaPhoto']?.toString(),
+      contact: json['contact']?.toString() ?? json['phone']?.toString() ?? '',
+      profilePhotoUrl:
+          json['profile_photo']?.toString() ?? json['profilePhoto']?.toString(),
+      licensePhotoUrl:
+          json['photo_license']?.toString() ?? json['licensePhoto']?.toString(),
+      vehiclePhotoUrl:
+          json['photo_plate']?.toString() ?? json['vehiclePhoto']?.toString(),
+      todaPhotoUrl:
+          json['photo_toda']?.toString() ?? json['todaPhoto']?.toString(),
     );
   }
 
@@ -878,150 +340,6 @@ class DriverProfile {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// APP BAR BADGE HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _AppBarBadgeDot {
-  final Color color;
-  final bool pulsing;
-  _AppBarBadgeDot._({required this.color, required this.pulsing});
-  factory _AppBarBadgeDot.pulsing(Color c) =>
-      _AppBarBadgeDot._(color: c, pulsing: true);
-  factory _AppBarBadgeDot.static(Color c) =>
-      _AppBarBadgeDot._(color: c, pulsing: false);
-}
-
-class _AppBarBadge extends StatelessWidget {
-  final DriverThemeColors themeColors;
-  final _AppBarBadgeDot? dot;
-  final String topLabel;
-  final Color topLabelColor;
-  final String? bottomLabel;
-  final Color? bottomLabelColor;
-  final Color borderColor;
-  final bool surgeActive;
-  final bool compact;
-
-  const _AppBarBadge({
-    required this.themeColors,
-    this.dot,
-    required this.topLabel,
-    required this.topLabelColor,
-    this.bottomLabel,
-    this.bottomLabelColor,
-    required this.borderColor,
-    this.surgeActive = false,
-    this.compact = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-          horizontal: compact ? 6 : 8, vertical: compact ? 4 : 5),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            borderColor.withValues(alpha: 0.15),
-            borderColor.withValues(alpha: 0.06),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-            color: borderColor.withValues(alpha: 0.45), width: 1),
-        boxShadow: [
-          BoxShadow(
-              color: borderColor.withValues(alpha: 0.12),
-              blurRadius: 6,
-              spreadRadius: 0),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (dot != null) ...[
-            dot!.pulsing
-                ? _PulsingDot(color: dot!.color)
-                : Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                        color: dot!.color, shape: BoxShape.circle),
-                  ),
-            const SizedBox(width: 3),
-          ],
-          if (surgeActive) ...[
-            Icon(_IC.bolt, color: topLabelColor, size: 9),
-            const SizedBox(width: 1),
-          ],
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(topLabel,
-                  style: TextStyle(
-                      color: topLabelColor,
-                      fontSize: compact ? 8 : 9,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.3,
-                      height: 1.1)),
-              if (bottomLabel != null && !compact)
-                Text(bottomLabel!,
-                    style: TextStyle(
-                        color: bottomLabelColor ??
-                            topLabelColor.withValues(alpha: 0.65),
-                        fontSize: 7.5,
-                        fontWeight: FontWeight.w600,
-                        height: 1.2)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AppBarIconButton extends StatelessWidget {
-  final Widget child;
-  final DriverThemeColors themeColors;
-  const _AppBarIconButton(
-      {required this.child, required this.themeColors});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 32,
-      height: 32,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-            color: Colors.white.withValues(alpha: 0.08), width: 1),
-      ),
-      child: Center(child: child),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// EDIT FIELD HELPER
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _EditField {
-  final String label;
-  final String key;
-  final String initialValue;
-  final TextInputType keyboardType;
-  const _EditField(this.label, this.key, this.initialValue,
-      {this.keyboardType = TextInputType.text});
-}
-
-enum _DocSlot { license, vehicle, toda }
-
-// ─────────────────────────────────────────────────────────────────────────────
 // MAIN WIDGET
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1033,8 +351,11 @@ class DriverHome extends StatefulWidget {
 
 class _DriverHomeState extends State<DriverHome>
     with SingleTickerProviderStateMixin {
-  final DriverThemeProvider _themeProvider = DriverThemeProvider();
-  DriverThemeColors get _t => _themeProvider.colors;
+  // ── Theme ─────────────────────────────────────────────────────────────────
+  final ThemeProvider _themeProvider = ThemeProvider();
+
+  AppThemeColors get _t => _themeProvider.colors;
+  Color _o(Color c, double alpha) => c.withValues(alpha: alpha);
 
   bool _isOnline = false;
   List _earnings = [];
@@ -1053,7 +374,6 @@ class _DriverHomeState extends State<DriverHome>
   double? _gpsAccuracy;
   double? _gpsSpeed;
   double? _gpsHeading;
-  bool _isTracking = false;
 
   LatLng? _commuterLiveLocation;
 
@@ -1071,43 +391,20 @@ class _DriverHomeState extends State<DriverHome>
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
 
+  // ── Notification service ──────────────────────────────────────────────────
   final NotificationService _notif = NotificationService();
 
-  String get _gpsAccuracyLabel {
-    if (_gpsAccuracy == null) return '—';
-    if (_gpsAccuracy! < 5) return 'Excellent';
-    if (_gpsAccuracy! < 15) return 'Good';
-    if (_gpsAccuracy! < 40) return 'Fair';
-    return 'Poor';
-  }
-
-  Color get _gpsAccuracyColor {
-    if (_gpsAccuracy == null) return _t.textMuted;
-    if (_gpsAccuracy! < 5) return _t.green;
-    if (_gpsAccuracy! < 15) return _t.green;
-    if (_gpsAccuracy! < 40) return _t.orange;
-    return _t.red;
-  }
-
-  String get _gpsSpeedLabel {
-    if (_gpsSpeed == null || _gpsSpeed! < 0.5) return '0 km/h';
-    return '${(_gpsSpeed! * 3.6).toStringAsFixed(1)} km/h';
-  }
-
-  String get _timeGreeting {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
-  }
+  // ── Responsive helpers ────────────────────────────────────────────────────
+  bool get _isSmallScreen => MediaQuery.of(context).size.width < 400;
+  double get _screenHeight => MediaQuery.of(context).size.height;
+  double get _screenWidth => MediaQuery.of(context).size.width;
 
   @override
   void initState() {
     super.initState();
     _animController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 600));
-    _fadeAnim =
-        CurvedAnimation(parent: _animController, curve: Curves.easeOut);
+    _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
     _animController.forward();
     _loadEarnings();
     _loadDriverProfile();
@@ -1115,8 +412,8 @@ class _DriverHomeState extends State<DriverHome>
     _initGPS();
     _profileRefreshTimer = Timer.periodic(
         const Duration(seconds: 30), (_) => _loadDriverProfile());
-    _fareConfigRefreshTimer = Timer.periodic(
-        const Duration(seconds: 60), (_) => _loadFareConfig());
+    _fareConfigRefreshTimer =
+        Timer.periodic(const Duration(seconds: 60), (_) => _loadFareConfig());
   }
 
   @override
@@ -1130,6 +427,10 @@ class _DriverHomeState extends State<DriverHome>
     super.dispose();
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // FARE CONFIG
+  // ─────────────────────────────────────────────────────────────────────────
+
   Future<void> _loadFareConfig() async {
     if (_fareConfigLoading) return;
     setState(() => _fareConfigLoading = true);
@@ -1142,7 +443,7 @@ class _DriverHomeState extends State<DriverHome>
         final newConfig = FareConfig.fromJson(data);
         if (!oldSurge && newConfig.surgeEnabled) {
           _notif.add(AppNotification(
-            type: NotifType.surgeActive,
+            type: NotifType.info,
             title: 'Surge Pricing Active 🔥',
             body:
                 'Surge ×${newConfig.surgeMultiplier.toStringAsFixed(1)} is now active. Earn more per ride!',
@@ -1153,6 +454,10 @@ class _DriverHomeState extends State<DriverHome>
     } catch (_) {}
     if (mounted) setState(() => _fareConfigLoading = false);
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GPS
+  // ─────────────────────────────────────────────────────────────────────────
 
   Future<void> _initGPS() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -1183,7 +488,6 @@ class _DriverHomeState extends State<DriverHome>
           _gpsAccuracy = pos.accuracy;
           _gpsSpeed = pos.speed;
           _gpsHeading = pos.heading;
-          _isTracking = true;
         });
         _mapController.move(_driverLocation, 15);
       }
@@ -1207,14 +511,11 @@ class _DriverHomeState extends State<DriverHome>
         _gpsAccuracy = pos.accuracy;
         _gpsSpeed = pos.speed;
         _gpsHeading = pos.heading;
-        _isTracking = true;
       });
       if (_activeRide == null) {
-        _mapController.move(
-            _driverLocation, _mapController.camera.zoom);
+        _mapController.move(_driverLocation, _mapController.camera.zoom);
       }
     }, onError: (_) {
-      if (mounted) setState(() => _isTracking = false);
       _notif.add(AppNotification(
         type: NotifType.gpsLost,
         title: 'GPS Signal Lost',
@@ -1244,8 +545,7 @@ class _DriverHomeState extends State<DriverHome>
     }
 
     try {
-      // ── FIX: status toggle goes to PHP, not Django ─────────────────
-      final dio = ApiClient.build(ApiConstants.phpBase);
+      final dio = ApiClient.build(ApiConstants.djangoBase);
       await dio.patch('/api/drivers/me/status', data: {
         'is_online': next,
         'lat': _driverLocation.latitude,
@@ -1256,25 +556,24 @@ class _DriverHomeState extends State<DriverHome>
 
   void _startLocationPush() {
     _locationPushTimer?.cancel();
-    _locationPushTimer = Timer.periodic(
-        const Duration(seconds: 2), (_) => _pushLocation());
+    _locationPushTimer =
+        Timer.periodic(const Duration(seconds: 2), (_) => _pushLocation());
     _pushLocation();
   }
 
   Future<void> _pushLocation() async {
     if (!_isOnline) return;
     try {
-      // ── FIX: location push goes to PHP ─────────────────────────────
-      final dio = ApiClient.build(ApiConstants.phpBase);
+      final dio = ApiClient.build(ApiConstants.djangoBase);
       await dio.patch('/api/drivers/me/location', data: {
         'lat': _driverLocation.latitude,
         'lng': _driverLocation.longitude,
       });
 
-      // ── FIX: driver-location-on-active-ride also goes to PHP ───────
       if (_activeRide != null) {
-        await dio.post(
-          '/api/rides/${_activeRide!.id}/location',
+        final djangoDio = ApiClient.build(ApiConstants.djangoBase);
+        await djangoDio.post(
+          '/api/drivers/rides/${_activeRide!.id}/driver-location',
           data: {
             'lat': _driverLocation.latitude,
             'lng': _driverLocation.longitude,
@@ -1295,7 +594,9 @@ class _DriverHomeState extends State<DriverHome>
       final res = await dio.get('/api/drivers/me/profile');
       final data = res.data as Map<String, dynamic>;
       if (mounted) {
-        setState(() => _driverProfile = DriverProfile.fromJson(data));
+        setState(() {
+          _driverProfile = DriverProfile.fromJson(data);
+        });
       }
     } catch (_) {}
     if (mounted) setState(() => _profileLoading = false);
@@ -1338,7 +639,9 @@ class _DriverHomeState extends State<DriverHome>
 
   Future<void> _fetchRoute(LatLng from, LatLng to) async {
     if ((from.latitude == 0 && from.longitude == 0) ||
-        (to.latitude == 0 && to.longitude == 0)) return;
+        (to.latitude == 0 && to.longitude == 0)) {
+      return;
+    }
 
     setState(() => _routeLoading = true);
     try {
@@ -1351,12 +654,11 @@ class _DriverHomeState extends State<DriverHome>
       final res = await http.get(url);
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
-        final coords =
-            data['routes'][0]['geometry']['coordinates'] as List;
+        final coords = data['routes'][0]['geometry']['coordinates'] as List;
         setState(() {
           _routePoints = coords
-              .map<LatLng>((c) => LatLng(
-                  (c[1] as num).toDouble(), (c[0] as num).toDouble()))
+              .map<LatLng>((c) =>
+                  LatLng((c[1] as num).toDouble(), (c[0] as num).toDouble()))
               .toList();
         });
         if (_routePoints.isNotEmpty) {
@@ -1374,28 +676,25 @@ class _DriverHomeState extends State<DriverHome>
 
   void _startRidePolling() {
     _ridePollingTimer?.cancel();
-    _ridePollingTimer = Timer.periodic(
-        const Duration(seconds: 3), (_) => _pollPendingRide());
+    _ridePollingTimer =
+        Timer.periodic(const Duration(seconds: 3), (_) => _pollPendingRide());
     _pollPendingRide();
   }
 
   Future<void> _pollPendingRide() async {
-    if (!_isOnline || _activeRide != null || _pendingRequest != null)
-      return;
+    if (!_isOnline || _activeRide != null || _pendingRequest != null) return;
     try {
       final dio = ApiClient.build(ApiConstants.djangoBase);
       final res = await dio.get('/api/drivers/rides/pending');
       final data = res.data;
       if (data != null && data is Map && data.isNotEmpty) {
-        final req =
-            RideRequest.fromJson(data as Map<String, dynamic>);
+        debugPrint('PENDING RIDE PAYLOAD: $data');
+        final req = RideRequest.fromJson(data as Map<String, dynamic>);
         if (mounted && _pendingRequest == null && _activeRide == null) {
           setState(() => _pendingRequest = req);
           _notif.add(AppNotification.newRideRequest(
             req.passengerName,
-            req.pickupLabel.isNotEmpty
-                ? req.pickupLabel
-                : 'Unknown pickup',
+            req.pickupLabel.isNotEmpty ? req.pickupLabel : 'Unknown pickup',
             _fareConfig.computeFareString(req.distanceKm),
           ));
           _showRideRequestSheet(req);
@@ -1412,8 +711,8 @@ class _DriverHomeState extends State<DriverHome>
       }
       try {
         final dio = ApiClient.build(ApiConstants.djangoBase);
-        final res = await dio.get(
-            '/api/drivers/rides/${_activeRide!.id}/commuter-location');
+        final res = await dio
+            .get('/api/drivers/rides/${_activeRide!.id}/commuter-location');
         final data = res.data as Map<String, dynamic>?;
         if (data != null &&
             data['lat'] != null &&
@@ -1440,9 +739,9 @@ class _DriverHomeState extends State<DriverHome>
     if (req.hasValidPickup && req.hasValidDropoff) {
       await _fetchRoute(_driverLocation, req.pickup);
     } else {
-      if (mounted)
-        _showSnack(
-            'Warning: ride has missing location data.', _t.orange);
+      if (mounted) {
+        _showSnack('Warning: ride has missing location data.', _t.orange);
+      }
     }
 
     _notif.add(AppNotification(
@@ -1452,9 +751,9 @@ class _DriverHomeState extends State<DriverHome>
           'You accepted ${req.passengerName}\'s ride. Navigate to pickup point.',
     ));
 
-    if (mounted)
-      _showSnack(
-          'Ride accepted! Navigate to pickup point.', _t.green);
+    if (mounted) {
+      _showSnack('Ride accepted! Navigate to pickup point.', _t.green);
+    }
     _startCommuterLocationPoll();
 
     try {
@@ -1478,19 +777,19 @@ class _DriverHomeState extends State<DriverHome>
         'driver_lng': _driverLocation.longitude,
       });
       await _loadEarnings();
-      _notif
-          .add(AppNotification.rideEarned('₱${earned.toStringAsFixed(2)}'));
+
+      _notif.add(AppNotification.rideEarned('₱${earned.toStringAsFixed(2)}'));
       _notif.add(AppNotification(
         type: NotifType.rideCompleted,
         title: 'Ride Completed',
         body:
             'You completed $passengerName\'s ride and earned ₱${earned.toStringAsFixed(2)}.',
       ));
-    } catch (_) {} finally {
+    } catch (_) {
+    } finally {
       if (mounted) {
         _showSnack(
-            'Ride completed! ₱${earned.toStringAsFixed(2)} earned.',
-            _t.green);
+            'Ride completed! ₱${earned.toStringAsFixed(2)} earned.', _t.green);
         setState(() {
           _loading = false;
           _activeRide = null;
@@ -1515,13 +814,6 @@ class _DriverHomeState extends State<DriverHome>
     } catch (_) {}
   }
 
-  Future<void> _declineRideOnBackend(int rideId) async {
-    try {
-      final dio = ApiClient.build(ApiConstants.djangoBase);
-      await dio.patch('/api/drivers/rides/$rideId/decline');
-    } catch (_) {}
-  }
-
   void _showSnack(String msg, Color color) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -1533,8 +825,7 @@ class _DriverHomeState extends State<DriverHome>
         left: 16,
         right: 16,
       ),
-      shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     ));
   }
 
@@ -1556,11 +847,198 @@ class _DriverHomeState extends State<DriverHome>
           _notif.add(AppNotification(
             type: NotifType.rideDeclined,
             title: 'Ride Declined',
-            body:
-                'You declined ${req.passengerName}\'s ride request.',
+            body: 'You declined ${req.passengerName}\'s ride request.',
           ));
           _declineRideOnBackend(req.id);
         },
+      ),
+    );
+  }
+
+  Future<void> _declineRideOnBackend(int rideId) async {
+    try {
+      final dio = ApiClient.build(ApiConstants.djangoBase);
+      await dio.patch('/api/drivers/rides/$rideId/decline');
+    } catch (_) {}
+  }
+
+  String get _gpsAccuracyLabel {
+    if (_gpsAccuracy == null) return '—';
+    if (_gpsAccuracy! < 5) return 'Excellent';
+    if (_gpsAccuracy! < 15) return 'Good';
+    if (_gpsAccuracy! < 40) return 'Fair';
+    return 'Poor';
+  }
+
+  Color get _gpsAccuracyColor {
+    if (_gpsAccuracy == null) return _t.textMuted;
+    if (_gpsAccuracy! < 5) return _t.green;
+    if (_gpsAccuracy! < 15) return _t.green;
+    if (_gpsAccuracy! < 40) return _t.orange;
+    return _t.red;
+  }
+
+  String get _gpsSpeedLabel {
+    if (_gpsSpeed == null || _gpsSpeed! < 0.5) return '0 km/h';
+    return '${(_gpsSpeed! * 3.6).toStringAsFixed(1)} km/h';
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // CHANGE PASSWORD
+  // ─────────────────────────────────────────────────────────────────────────
+
+  void _showChangePasswordDialog() {
+    final currentCtrl = TextEditingController();
+    final newCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Padding(
+          padding:
+              EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          child: SingleChildScrollView(
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(12, 12, 12, 20),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: _t.appBarBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _t.border, width: 1.5),
+              ),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Row(children: [
+                  Icon(Icons.lock_outline_rounded, color: _t.accent, size: 18),
+                  const SizedBox(width: 8),
+                  Text('Change Password',
+                      style: TextStyle(
+                          color: _t.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800)),
+                  const Spacer(),
+                  GestureDetector(
+                      onTap: () => Navigator.pop(ctx),
+                      child: Icon(Icons.close, color: _t.textMuted, size: 20)),
+                ]),
+                const SizedBox(height: 20),
+                _pwdField(currentCtrl, 'Current Password'),
+                const SizedBox(height: 12),
+                _pwdField(newCtrl, 'New Password'),
+                const SizedBox(height: 12),
+                _pwdField(confirmCtrl, 'Confirm New Password'),
+                const SizedBox(height: 20),
+                StatefulBuilder(builder: (ctx2, setSt) {
+                  bool saving = false;
+                  return GestureDetector(
+                    onTap: saving
+                        ? null
+                        : () async {
+                            if (newCtrl.text != confirmCtrl.text) {
+                              _showSnack('Passwords do not match.', _t.red);
+                              return;
+                            }
+                            if (newCtrl.text.length < 6) {
+                              _showSnack(
+                                  'Password must be at least 6 characters.',
+                                  _t.red);
+                              return;
+                            }
+                            setSt(() => saving = true);
+                            bool ok = false;
+                            try {
+                              final dio =
+                                  ApiClient.build(ApiConstants.djangoBase);
+                              await dio.post(
+                                '/api/drivers/me/change-password',
+                                data: {
+                                  'current_password': currentCtrl.text,
+                                  'new_password': newCtrl.text,
+                                },
+                              );
+                              ok = true;
+                            } catch (_) {}
+                            if (ctx2.mounted) Navigator.pop(ctx2);
+                            _showSnack(
+                                ok
+                                    ? 'Password changed!'
+                                    : 'Failed to change password.',
+                                ok ? _t.green : _t.red);
+                          },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: saving ? _o(_t.accent, 0.5) : _t.accent,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: saving
+                            ? null
+                            : [
+                                BoxShadow(
+                                    color: _o(_t.accent, 0.4),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4))
+                              ],
+                      ),
+                      child: saving
+                          ? const Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2),
+                              ),
+                            )
+                          : const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                  Icon(Icons.save_outlined,
+                                      color: Colors.white, size: 18),
+                                  SizedBox(width: 8),
+                                  Text('Update Password',
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 15)),
+                                ]),
+                    ),
+                  );
+                }),
+              ]),
+            ),
+          ),
+        );
+      },
+    ).whenComplete(() {
+      currentCtrl.dispose();
+      newCtrl.dispose();
+      confirmCtrl.dispose();
+    });
+  }
+
+  Widget _pwdField(TextEditingController ctrl, String hint) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _t.bgDeep,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _t.border),
+      ),
+      child: TextField(
+        controller: ctrl,
+        obscureText: true,
+        style: TextStyle(color: _t.textPrimary, fontSize: 13),
+        cursorColor: _t.accent,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(color: _o(_t.textMuted, 0.6), fontSize: 13),
+          prefixIcon:
+              Icon(Icons.lock_outline_rounded, color: _t.textMuted, size: 16),
+          border: InputBorder.none,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        ),
       ),
     );
   }
@@ -1577,239 +1055,115 @@ class _DriverHomeState extends State<DriverHome>
       builder: (context, _) {
         return Scaffold(
           backgroundColor: _t.bgDeep,
-          appBar: _buildAppBar(context, auth),
+          appBar: _buildAppBar(auth),
           bottomNavigationBar: _buildBottomNav(),
           body: FadeTransition(
             opacity: _fadeAnim,
-            child: switch (_tab) {
-              0 => _buildDashboardTab(auth),
-              1 => _buildEarningsTab(),
-              2 => _buildProfileTab(auth),
-              _ => _buildDashboardTab(auth),
-            },
+            child: _tab == 0
+                ? _buildDashboardTab(auth)
+                : _tab == 1
+                    ? _buildEarningsTab()
+                    : _buildProfileTab(auth),
           ),
         );
       },
     );
   }
 
-  PreferredSizeWidget _buildAppBar(
-      BuildContext context, AuthProvider auth) {
-    final compact = _Responsive.isCompact(context);
-    final barH = _Responsive.appBarHeight(context);
-    final logoSz = _Responsive.logoSize(context);
-    final titleFz = _Responsive.titleFontSize(context);
-    final subFz = _Responsive.subtitleFontSize(context);
-    final avatarR = _Responsive.avatarRadius(context);
-    final showFareBadge = !compact;
+  // ─────────────────────────────────────────────────────────────────────────
+  // APP BAR
+  // ─────────────────────────────────────────────────────────────────────────
 
-    final displayName = _driverProfile?.fullName.isNotEmpty == true
-        ? _driverProfile!.fullName.split(' ').first
+  PreferredSizeWidget _buildAppBar(AuthProvider auth) {
+    final profile = _driverProfile;
+    final displayName = profile?.fullName.isNotEmpty == true
+        ? profile!.fullName.split(' ').first
         : auth.username ?? 'Driver';
 
+    final hour = DateTime.now().hour;
+    final greeting = hour < 12
+        ? 'Good morning'
+        : hour < 17
+            ? 'Good afternoon'
+            : 'Good evening';
+
     return AppBar(
-      backgroundColor:
-          _themeProvider.isDark ? Colors.transparent : _t.bgLight,
+      backgroundColor: _t.appBarBg,
       elevation: 0,
-      toolbarHeight: barH,
-      flexibleSpace: _themeProvider.isDark
-          ? Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF060F1C),
-                    Color(0xFF081422),
-                    Color(0xFF0A1929),
-                  ],
-                  stops: [0.0, 0.55, 1.0],
-                ),
-              ),
-              child: Stack(children: [
-                Positioned(
-                  top: -18,
-                  right: 60,
-                  child: Transform.rotate(
-                    angle: -0.45,
-                    child: Container(
-                      width: 3,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            _o(_t.accent, 0.0),
-                            _o(_t.accent, 0.18),
-                            _o(_t.accent, 0.0),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    height: 1,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: [
-                        _o(_t.accent, 0.0),
-                        _o(_t.accent, 0.45),
-                        _o(_t.orange, 0.25),
-                        _o(_t.accent, 0.0),
-                      ]),
-                    ),
-                  ),
-                ),
-              ]),
-            )
-          : Container(
-              decoration: BoxDecoration(
-                color: _t.bgLight,
-                border: Border(
-                    bottom: BorderSide(color: _t.border, width: 1)),
-              ),
-            ),
+      titleSpacing: 12,
       automaticallyImplyLeading: false,
-      titleSpacing: compact ? 10 : 14,
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Stack(alignment: Alignment.center, children: [
-            Container(
-              width: logoSz + 8,
-              height: logoSz + 8,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [
-                  _o(_t.accent, 0.25),
-                  _o(_t.accent, 0.0),
-                ]),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _o(_t.accent, 0.15),
+              border: Border.all(color: _o(_t.accent, 0.3), width: 1.5),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Image.asset(
+              'assets/logo.png',
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Icon(
+                Icons.directions_car_outlined,
+                color: _t.accent,
+                size: 20,
               ),
             ),
-            Container(
-              width: logoSz,
-              height: logoSz,
-              decoration: BoxDecoration(
-                color: _o(_t.accent, 0.1),
-                borderRadius: BorderRadius.circular(logoSz * 0.3),
-                border:
-                    Border.all(color: _o(_t.accent, 0.4), width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                      color: _o(_t.accent, 0.25),
-                      blurRadius: 12,
-                      spreadRadius: 0),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RichText(
+                    text: TextSpan(
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w900),
+                      children: [
+                        TextSpan(
+                            text: 'Pasada',
+                            style: TextStyle(color: _t.textPrimary)),
+                        TextSpan(
+                            text: 'Now', style: TextStyle(color: _t.orange)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: _o(_t.accent, 0.18),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: _o(_t.accent, 0.35), width: 1),
+                    ),
+                    child: Text(
+                      'DRIVER',
+                      style: TextStyle(
+                          fontSize: 8,
+                          color: _t.accent,
+                          letterSpacing: 1.0,
+                          fontWeight: FontWeight.w700),
+                    ),
+                  ),
                 ],
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(logoSz * 0.28),
-                child: Image.asset(
-                  'assets/logo.png',
-                  width: logoSz,
-                  height: logoSz,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => Icon(_IC.car,
-                      color: _t.accent, size: logoSz * 0.5),
-                ),
+              Text(
+                '$greeting, $displayName 👋',
+                style: TextStyle(
+                    fontSize: 10,
+                    color: _t.textMuted,
+                    fontWeight: FontWeight.w500,
+                    height: 1.2),
               ),
-            ),
-          ]),
-          SizedBox(width: compact ? 8 : 11),
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Flexible(
-                      child: RichText(
-                        overflow: TextOverflow.ellipsis,
-                        text: TextSpan(children: [
-                          TextSpan(
-                            text: 'Pasada',
-                            style: TextStyle(
-                              color: _t.textPrimary,
-                              fontWeight: FontWeight.w900,
-                              fontSize: titleFz,
-                              letterSpacing: -0.5,
-                              height: 1.0,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'Now',
-                            style: TextStyle(
-                              color: _t.orange,
-                              fontWeight: FontWeight.w900,
-                              fontSize: titleFz,
-                              letterSpacing: -0.5,
-                              height: 1.0,
-                            ),
-                          ),
-                        ]),
-                      ),
-                    ),
-                    if (!compact) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(colors: [
-                            _o(_t.accent, 0.25),
-                            _o(_t.accent, 0.12),
-                          ]),
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                              color: _o(_t.accent, 0.5), width: 1),
-                          boxShadow: [
-                            BoxShadow(
-                                color: _o(_t.accent, 0.2),
-                                blurRadius: 6,
-                                spreadRadius: 0),
-                          ],
-                        ),
-                        child: Text(
-                          'DRIVER',
-                          style: TextStyle(
-                            color: _t.accent,
-                            fontSize: 7,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.2,
-                            height: 1.0,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        '$_timeGreeting, $displayName 👋',
-                        style: TextStyle(
-                          color: _o(_t.textMuted, 0.9),
-                          fontSize: subFz,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+            ],
           ),
         ],
       ),
@@ -1817,228 +1171,170 @@ class _DriverHomeState extends State<DriverHome>
         GestureDetector(
           onTap: _initGPS,
           child: Padding(
-            padding: EdgeInsets.symmetric(
-                vertical: compact ? 14 : 18, horizontal: 2),
-            child: _AppBarBadge(
-              themeColors: _t,
-              compact: compact,
-              dot: _isTracking
-                  ? _AppBarBadgeDot.pulsing(_t.green)
-                  : _AppBarBadgeDot.static(_t.orange),
-              topLabel: _isTracking ? 'LIVE' : 'GPS',
-              topLabelColor: _isTracking ? _t.green : _t.orange,
-              bottomLabel: _isTracking && _gpsAccuracy != null
-                  ? '±${_gpsAccuracy!.toStringAsFixed(0)}m'
-                  : null,
-              bottomLabelColor: _gpsAccuracyColor,
-              borderColor: _isTracking ? _t.green : _t.orange,
-            ),
-          ),
-        ),
-        if (showFareBadge)
-          GestureDetector(
-            onTap: _loadFareConfig,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                  vertical: 18, horizontal: 2),
-              child: _AppBarBadge(
-                themeColors: _t,
-                compact: compact,
-                topLabel:
-                    '₱${_fareConfig.baseFare.toStringAsFixed(0)}+',
-                topLabelColor: _fareConfig.surgeEnabled
-                    ? _t.orange
-                    : _t.accent,
-                bottomLabel:
-                    '${_fareConfig.perKmRate.toStringAsFixed(0)}/km',
-                bottomLabelColor: _fareConfig.surgeEnabled
-                    ? _t.orange
-                    : _t.textMuted,
-                borderColor: _fareConfig.surgeEnabled
-                    ? _t.orange
-                    : _t.accent,
-                surgeActive: _fareConfig.surgeEnabled,
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 3),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(
+                color: _o(_gpsAccuracy != null ? _t.green : _t.orange, 0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color:
+                        _o(_gpsAccuracy != null ? _t.green : _t.orange, 0.45),
+                    width: 1),
               ),
-            ),
-          ),
-        Padding(
-          padding: const EdgeInsets.symmetric(
-              vertical: 18, horizontal: 2),
-          child: _AppBarIconButton(
-            themeColors: _t,
-            child: NotificationBell(
-              service: _notif,
-              iconColor: _o(_t.textPrimary, 0.85),
-              badgeColor: _t.accent,
-              themeColors: _t,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _gpsAccuracy != null
+                      ? _PulsingDot(color: _t.green)
+                      : Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                              color: _t.orange, shape: BoxShape.circle)),
+                  const SizedBox(width: 4),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _gpsAccuracy != null ? 'LIVE' : 'GPS',
+                        style: TextStyle(
+                            color: _gpsAccuracy != null ? _t.green : _t.orange,
+                            fontSize: 8,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5),
+                      ),
+                      if (_gpsAccuracy != null)
+                        Text(
+                          '±${_gpsAccuracy!.toStringAsFixed(0)}m',
+                          style: TextStyle(
+                              color: _gpsAccuracyColor,
+                              fontSize: 7,
+                              fontWeight: FontWeight.w600),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
         GestureDetector(
-          onTap: () => setState(() => _themeProvider.toggle()),
+          onTap: _loadFareConfig,
           child: Padding(
-            padding: EdgeInsets.symmetric(
-                vertical: compact ? 20 : 20, horizontal: 2),
-            child: compact
-                ? Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: _themeProvider.isDark
-                          ? _o(_t.accent, 0.2)
-                          : _o(_t.orange, 0.2),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: _themeProvider.isDark
-                            ? _o(_t.accent, 0.45)
-                            : _o(_t.orange, 0.45),
-                        width: 1,
-                      ),
-                    ),
-                    child: Icon(
-                      _themeProvider.isDark
-                          ? Icons.dark_mode_rounded
-                          : Icons.light_mode_rounded,
-                      color: _themeProvider.isDark
-                          ? _t.accent
-                          : _t.orange,
-                      size: 14,
-                    ),
-                  )
-                : AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    width: 42,
-                    height: 24,
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: _themeProvider.isDark
-                          ? _o(_t.accent, 0.25)
-                          : _o(_t.orange, 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _themeProvider.isDark
-                            ? _o(_t.accent, 0.5)
-                            : _o(_t.orange, 0.5),
-                        width: 1,
-                      ),
-                    ),
-                    child: Stack(children: [
-                      AnimatedAlign(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeInOut,
-                        alignment: _themeProvider.isDark
-                            ? Alignment.centerLeft
-                            : Alignment.centerRight,
-                        child: Container(
-                          width: 18,
-                          height: 18,
-                          decoration: BoxDecoration(
-                            color: _themeProvider.isDark
-                                ? _t.accent
-                                : _t.orange,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            _themeProvider.isDark
-                                ? Icons.dark_mode_rounded
-                                : Icons.light_mode_rounded,
-                            color: Colors.white,
-                            size: 11,
-                          ),
-                        ),
-                      ),
-                    ]),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 3),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(
+                color:
+                    _o(_fareConfig.surgeEnabled ? _t.orange : _t.accent, 0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color: _o(
+                        _fareConfig.surgeEnabled ? _t.orange : _t.accent, 0.45),
+                    width: 1),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '₱${_fareConfig.baseFare.toStringAsFixed(0)}+',
+                    style: TextStyle(
+                        color: _fareConfig.surgeEnabled ? _t.orange : _t.accent,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800),
                   ),
+                  Text(
+                    '${_fareConfig.perKmRate.toStringAsFixed(0)}/km',
+                    style: TextStyle(
+                        color:
+                            _fareConfig.surgeEnabled ? _t.orange : _t.textMuted,
+                        fontSize: 7,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
         Padding(
-          padding:
-              EdgeInsets.only(right: compact ? 8 : 12, left: 1),
-          child: GestureDetector(
-            onTap: () => setState(() => _tab = 2),
-            child: _buildAppBarAvatar(auth, avatarR),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 2),
+          child: NotificationBell(
+            service: _notif,
+            iconColor: _t.textPrimary,
+            badgeColor: _t.accent,
+          ),
+        ),
+        GestureDetector(
+          onTap: () {
+            setState(() => _themeProvider.toggle());
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 3),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              width: 42,
+              height: 24,
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: _themeProvider.isDark
+                    ? _o(_t.accent, 0.25)
+                    : _o(_t.orange, 0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _themeProvider.isDark
+                      ? _o(_t.accent, 0.5)
+                      : _o(_t.orange, 0.5),
+                  width: 1,
+                ),
+              ),
+              child: Stack(
+                children: [
+                  AnimatedAlign(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    alignment: _themeProvider.isDark
+                        ? Alignment.centerLeft
+                        : Alignment.centerRight,
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: _themeProvider.isDark ? _t.accent : _t.orange,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _themeProvider.isDark
+                            ? Icons.dark_mode_rounded
+                            : Icons.light_mode_rounded,
+                        color: Colors.white,
+                        size: 11,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        GestureDetector(
+          onTap: () => setState(() => _tab = 2),
+          child: Padding(
+            padding: const EdgeInsets.only(right: 10, left: 2),
+            child: _buildAvatarWidget(radius: 15, fontSize: 12),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildAppBarAvatar(AuthProvider auth, double radius) {
-    final photoUrl = _driverProfile?.profilePhotoUrl;
-    Widget avatarChild;
-
-    if (photoUrl != null && photoUrl.isNotEmpty) {
-      final isBase64 = !photoUrl.startsWith('http');
-      avatarChild = CircleAvatar(
-        radius: radius,
-        backgroundColor: _o(_t.accent, 0.2),
-        backgroundImage: isBase64
-            ? MemoryImage(base64Decode(photoUrl))
-            : NetworkImage(photoUrl) as ImageProvider,
-        onBackgroundImageError: (_, __) {},
-      );
-    } else {
-      final initial = (auth.username ?? 'D')[0].toUpperCase();
-      avatarChild = CircleAvatar(
-        radius: radius,
-        backgroundColor: _o(_t.accent, 0.2),
-        child: Text(initial,
-            style: TextStyle(
-                color: _t.accent,
-                fontSize: radius * 0.75,
-                fontWeight: FontWeight.w800)),
-      );
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: _o(_t.accent, 0.55), width: 2),
-        boxShadow: [
-          BoxShadow(
-              color: _o(_t.accent, 0.3),
-              blurRadius: 10,
-              spreadRadius: 0),
-        ],
-      ),
-      child: avatarChild,
-    );
-  }
-
-  Widget _buildAvatarWidget(
-      {required double radius, required double fontSize}) {
-    final photoUrl = _driverProfile?.profilePhotoUrl;
-    final initial = _driverProfile?.fullName.isNotEmpty == true
-        ? _driverProfile!.fullName[0].toUpperCase()
-        : 'D';
-
-    if (photoUrl != null && photoUrl.isNotEmpty) {
-      final isBase64 = !photoUrl.startsWith('http');
-      return CircleAvatar(
-        radius: radius,
-        backgroundColor: _o(_t.accent, 0.2),
-        backgroundImage: isBase64
-            ? MemoryImage(base64Decode(photoUrl))
-            : NetworkImage(photoUrl) as ImageProvider,
-        onBackgroundImageError: (_, __) {},
-      );
-    }
-
-    return CircleAvatar(
-      radius: radius,
-      backgroundColor: _o(_t.accent, 0.2),
-      child: Text(initial,
-          style: TextStyle(
-              color: _t.accent,
-              fontWeight: FontWeight.w800,
-              fontSize: fontSize)),
-    );
-  }
-
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
-        color: _t.bgLight,
+        color: _t.appBarBg,
         border: Border(top: BorderSide(color: _t.border, width: 1)),
       ),
       child: SafeArea(
@@ -2054,35 +1350,20 @@ class _DriverHomeState extends State<DriverHome>
           selectedItemColor: _t.accent,
           unselectedItemColor: _t.textMuted,
           elevation: 0,
-          type: BottomNavigationBarType.fixed,
-          selectedLabelStyle: const TextStyle(
-              fontSize: 10, fontWeight: FontWeight.w700),
+          selectedLabelStyle:
+              const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
           unselectedLabelStyle: const TextStyle(fontSize: 10),
-          items: [
+          items: const [
             BottomNavigationBarItem(
-                icon: Icon(_IC.dashboard, size: 22),
+                icon: Icon(Icons.map_outlined, size: 22),
                 activeIcon: Icon(Icons.map, size: 22),
                 label: 'Dashboard'),
             BottomNavigationBarItem(
-                icon: Stack(children: [
-                  Icon(_IC.earnings, size: 22),
-                  if (_activeRide != null)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                              color: _t.green,
-                              shape: BoxShape.circle)),
-                    ),
-                ]),
-                activeIcon:
-                    Icon(Icons.account_balance_wallet, size: 22),
+                icon: Icon(Icons.account_balance_wallet_outlined, size: 22),
+                activeIcon: Icon(Icons.account_balance_wallet, size: 22),
                 label: 'Earnings'),
             BottomNavigationBarItem(
-                icon: Icon(_IC.profile, size: 22),
+                icon: Icon(Icons.person_outline, size: 22),
                 activeIcon: Icon(Icons.person, size: 22),
                 label: 'My Profile'),
           ],
@@ -2091,29 +1372,536 @@ class _DriverHomeState extends State<DriverHome>
     );
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // DASHBOARD TAB
+  // ─────────────────────────────────────────────────────────────────────────
+
   Widget _buildDashboardTab(AuthProvider auth) {
     return Column(children: [
       Container(
-        color: _t.bgLight,
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        color: _t.appBarBg,
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
         child: Column(children: [
-          _buildStatRow(),
+          _buildStatCards(),
           const SizedBox(height: 8),
           _buildStatusBanner(),
         ]),
       ),
-      Expanded(child: _buildMap()),
+      Expanded(child: _buildRealtimeMap()),
       if (_activeRide != null)
         ConstrainedBox(
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.48,
+            maxHeight: _screenHeight * 0.48,
           ),
           child: _buildActiveRideBanner(auth),
         ),
     ]);
   }
 
-  Widget _buildStatRow() {
+  Widget _buildRealtimeMap() {
+    return Stack(children: [
+      FlutterMap(
+        mapController: _mapController,
+        options: MapOptions(
+          initialCenter: _driverLocation,
+          initialZoom: 15.0,
+          interactionOptions: const InteractionOptions(
+            flags: InteractiveFlag.all,
+          ),
+        ),
+        children: [
+          TileLayer(
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: 'com.pasadanow.driver',
+            maxZoom: 19,
+          ),
+          if (_gpsAccuracy != null)
+            CircleLayer(circles: [
+              CircleMarker(
+                point: _driverLocation,
+                radius: _gpsAccuracy!,
+                useRadiusInMeter: true,
+                color: _o(_t.green, 0.07),
+                borderColor: _o(_t.green, 0.2),
+                borderStrokeWidth: 1.0,
+              ),
+            ]),
+          if (_routePoints.isNotEmpty)
+            PolylineLayer(polylines: [
+              Polyline(
+                points: _routePoints,
+                color: _t.accent,
+                strokeWidth: 4.0,
+                borderColor: _o(_t.accent, 0.3),
+                borderStrokeWidth: 8.0,
+              ),
+            ]),
+          MarkerLayer(markers: [
+            Marker(
+              point: _driverLocation,
+              width: 44,
+              height: 44,
+              child: _DriverMarker(
+                  isOnline: _isOnline,
+                  onlineColor: _t.green,
+                  offlineColor: _t.textMuted),
+            ),
+            if (_commuterLiveLocation != null && _activeRide != null)
+              Marker(
+                point: _commuterLiveLocation!,
+                width: 110,
+                height: 52,
+                alignment: Alignment.topCenter,
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black26, blurRadius: 4)
+                      ],
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      _PulsingDot(color: _t.accent),
+                      const SizedBox(width: 4),
+                      Text(
+                        _activeRide!.passengerName.split(' ').first,
+                        style: const TextStyle(
+                            color: Colors.black87,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700),
+                      ),
+                    ]),
+                  ),
+                  const SizedBox(height: 2),
+                  Icon(Icons.person_pin_circle, color: _t.accent, size: 22),
+                ]),
+              ),
+            if (_activeRide != null && _activeRide!.hasValidPickup)
+              Marker(
+                point: _activeRide!.pickup,
+                width: 100,
+                height: 52,
+                alignment: Alignment.topCenter,
+                child: _RouteMarker(
+                    color: _t.green,
+                    icon: Icons.radio_button_checked,
+                    label: 'Pick up'),
+              ),
+            if (_activeRide != null && _activeRide!.hasValidDropoff)
+              Marker(
+                point: _activeRide!.dropoff,
+                width: 110,
+                height: 52,
+                alignment: Alignment.topCenter,
+                child: _RouteMarker(
+                    color: _t.red, icon: Icons.location_on, label: 'Drop off'),
+              ),
+          ]),
+          const RichAttributionWidget(attributions: [
+            TextSourceAttribution('OpenStreetMap contributors'),
+          ]),
+        ],
+      ),
+      if (_routeLoading)
+        Container(
+          color: Colors.black38,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              decoration: BoxDecoration(
+                color: _t.bgCard,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _t.border),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: _t.accent),
+                ),
+                const SizedBox(width: 10),
+                Text('Calculating route…',
+                    style: TextStyle(color: _t.textPrimary, fontSize: 12)),
+              ]),
+            ),
+          ),
+        ),
+      Positioned(
+        top: 10,
+        right: 10,
+        child: Column(children: [
+          _mapBtn(
+              Icons.add,
+              () => _mapController.move(_mapController.camera.center,
+                  _mapController.camera.zoom + 1)),
+          const SizedBox(height: 4),
+          _mapBtn(
+              Icons.remove,
+              () => _mapController.move(_mapController.camera.center,
+                  _mapController.camera.zoom - 1)),
+          const SizedBox(height: 4),
+          _mapBtn(Icons.my_location,
+              () => _mapController.move(_driverLocation, 15)),
+          if (_commuterLiveLocation != null) ...[
+            const SizedBox(height: 4),
+            _mapBtn(Icons.fit_screen, () {
+              final bounds = LatLngBounds.fromPoints(
+                  [_driverLocation, _commuterLiveLocation!]);
+              _mapController.fitCamera(CameraFit.bounds(
+                  bounds: bounds, padding: const EdgeInsets.all(60)));
+            }),
+          ],
+        ]),
+      ),
+      if (_gpsAccuracy != null)
+        Positioned(
+          top: 10,
+          left: 10,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+            decoration: BoxDecoration(
+              color: _o(_t.mapOverlayBg, 0.9),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: _t.border),
+            ),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                _PulsingDot(color: _t.green),
+                const SizedBox(width: 4),
+                Text('GPS LIVE',
+                    style: TextStyle(
+                        color: _t.green,
+                        fontSize: 7,
+                        fontWeight: FontWeight.w700)),
+              ]),
+              Text('±${_gpsAccuracy!.toStringAsFixed(0)}m · $_gpsAccuracyLabel',
+                  style: TextStyle(color: _gpsAccuracyColor, fontSize: 7)),
+              Text(_gpsSpeedLabel,
+                  style: TextStyle(
+                      color: _t.textPrimary,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700)),
+            ]),
+          ),
+        ),
+      if (!_isOnline)
+        Positioned.fill(
+          child: IgnorePointer(
+            child: Container(
+              color: _o(Colors.black, 0.45),
+              child: Center(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: _t.bgCard,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: _t.border),
+                  ),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.signal_wifi_off_outlined,
+                        color: _t.textMuted, size: 32),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Go online to start\naccepting rides',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: _t.textMuted, fontSize: 12, height: 1.5),
+                    ),
+                  ]),
+                ),
+              ),
+            ),
+          ),
+        ),
+      Positioned(
+        right: 6,
+        bottom: 4,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.75),
+            borderRadius: BorderRadius.circular(3),
+          ),
+          child: const Text('© OpenStreetMap',
+              style: TextStyle(fontSize: 7, color: Colors.black54)),
+        ),
+      ),
+    ]);
+  }
+
+  Widget _mapBtn(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: _t.bgCard,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: _t.border),
+          boxShadow: [BoxShadow(color: _o(Colors.black, 0.3), blurRadius: 6)],
+        ),
+        child: Center(child: Icon(icon, color: _t.textPrimary, size: 16)),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ACTIVE RIDE BANNER
+  // ─────────────────────────────────────────────────────────────────────────
+
+  Widget _buildActiveRideBanner(AuthProvider auth) {
+    final ride = _activeRide!;
+    return Container(
+      decoration: BoxDecoration(
+        color: _t.appBarBg,
+        border: Border(top: BorderSide(color: _t.border, width: 1)),
+        boxShadow: [
+          BoxShadow(
+              color: _o(Colors.black, 0.4),
+              blurRadius: 12,
+              offset: const Offset(0, -4)),
+        ],
+      ),
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(
+          12,
+          10,
+          12,
+          MediaQuery.of(context).padding.bottom + 10,
+        ),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Row(children: [
+            _statusBadge(Icons.radio_button_checked, 'Active Ride', _t.green),
+            const Spacer(),
+            _fareBadge(ride.fare),
+          ]),
+          const SizedBox(height: 10),
+          Row(children: [
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: _o(_t.accent, 0.2),
+              child: Text(ride.passengerName[0],
+                  style: TextStyle(
+                      color: _t.accent,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13)),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(ride.passengerName,
+                        style: TextStyle(
+                            color: _t.textPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13),
+                        overflow: TextOverflow.ellipsis),
+                    Row(children: [
+                      Text(
+                        '${ride.distanceKm.toStringAsFixed(1)} km · ₱${ride.fare.toStringAsFixed(2)}',
+                        style: TextStyle(color: _t.textMuted, fontSize: 11),
+                      ),
+                      if (_commuterLiveLocation != null) ...[
+                        const SizedBox(width: 5),
+                        _PulsingDot(color: _t.accent),
+                        const SizedBox(width: 3),
+                        Text('Live',
+                            style: TextStyle(color: _t.accent, fontSize: 10)),
+                      ],
+                    ]),
+                  ]),
+            ),
+          ]),
+          const SizedBox(height: 8),
+          _routeLabel(
+              Icons.radio_button_checked, _t.green, 'Pickup', ride.pickupLabel),
+          const SizedBox(height: 4),
+          _routeLabel(
+              Icons.location_on_outlined, _t.red, 'Dropoff', ride.dropoffLabel),
+          const SizedBox(height: 8),
+          _fareBreakdownBanner(ride),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 180,
+            child: ChatWidget(
+              rideId: ride.id.toString(),
+              username: auth.username ?? 'driver',
+              role: 'driver',
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(children: [
+            if (_commuterLiveLocation != null) ...[
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  color: _o(_t.accent, 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _o(_t.accent, 0.3)),
+                ),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Text('Commuter',
+                      style: TextStyle(color: _t.textMuted, fontSize: 9)),
+                  _PulsingDot(color: _t.accent),
+                  Text('Live', style: TextStyle(color: _t.accent, fontSize: 9)),
+                ]),
+              ),
+            ],
+            Expanded(
+              child: GestureDetector(
+                onTap: _loading ? null : _completeRide,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  decoration: BoxDecoration(
+                    color: _t.green,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                          color: _o(_t.green, 0.4),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4)),
+                    ],
+                  ),
+                  child: _loading
+                      ? const Center(
+                          child: SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2)))
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.check_circle_outline,
+                                color: Colors.white, size: 18),
+                            SizedBox(width: 6),
+                            Text('Complete Ride',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 14)),
+                          ],
+                        ),
+                ),
+              ),
+            ),
+          ]),
+        ]),
+      ),
+    );
+  }
+
+  Widget _fareBreakdownBanner(RideRequest ride) {
+    final cfg = _fareConfig;
+    final multiplier = cfg.surgeEnabled ? cfg.surgeMultiplier : 1.0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: _o(_t.orange, 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _o(_t.orange, 0.25)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Text('Base fare',
+              style: TextStyle(color: _t.textMuted, fontSize: 11)),
+          Text('₱${cfg.baseFare.toStringAsFixed(2)}',
+              style: TextStyle(color: _t.textPrimary, fontSize: 11)),
+        ]),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Flexible(
+            child: Text(
+                'Distance (${ride.distanceKm.toStringAsFixed(1)} km × ₱${cfg.perKmRate.toStringAsFixed(2)})',
+                style: TextStyle(color: _t.textMuted, fontSize: 11),
+                overflow: TextOverflow.ellipsis),
+          ),
+          const SizedBox(width: 8),
+          Text('₱${(ride.distanceKm * cfg.perKmRate).toStringAsFixed(2)}',
+              style: TextStyle(color: _t.textPrimary, fontSize: 11)),
+        ]),
+        if (cfg.surgeEnabled)
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text('Surge (×${multiplier.toStringAsFixed(1)})',
+                style: TextStyle(color: _t.orange, fontSize: 11)),
+            Text('+${((multiplier - 1) * 100).toStringAsFixed(0)}%',
+                style: TextStyle(color: _t.orange, fontSize: 11)),
+          ]),
+        if (cfg.bookingFee > 0)
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text('Booking fee',
+                style: TextStyle(color: _t.textMuted, fontSize: 11)),
+            Text('₱${cfg.bookingFee.toStringAsFixed(2)}',
+                style: TextStyle(color: _t.textPrimary, fontSize: 11)),
+          ]),
+      ]),
+    );
+  }
+
+  Widget _statusBadge(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: _o(color, 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _o(color, 0.3)),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, color: color, size: 11),
+        const SizedBox(width: 4),
+        Text(label,
+            style: TextStyle(
+                color: color, fontSize: 11, fontWeight: FontWeight.w700)),
+      ]),
+    );
+  }
+
+  Widget _fareBadge(double fare) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(
+        color: _o(_t.orange, 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _o(_t.orange, 0.4)),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.credit_card_outlined, color: _t.orange, size: 14),
+        const SizedBox(width: 4),
+        Text('₱${fare.toStringAsFixed(2)}',
+            style: TextStyle(
+                color: _t.orange, fontWeight: FontWeight.w800, fontSize: 14)),
+      ]),
+    );
+  }
+
+  Widget _routeLabel(IconData icon, Color color, String heading, String sub) {
+    return Row(children: [
+      Icon(icon, color: color, size: 16),
+      const SizedBox(width: 6),
+      Expanded(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(heading,
+              style: TextStyle(
+                  color: color, fontSize: 9, fontWeight: FontWeight.w600)),
+          Text(sub,
+              style: TextStyle(color: _t.textPrimary, fontSize: 11),
+              overflow: TextOverflow.ellipsis),
+        ]),
+      ),
+    ]);
+  }
+
+  Widget _buildStatCards() {
     final todayEarnings = _summary?['today'] ?? 0.0;
     final allTime = _summary?['all_time'] ?? 0.0;
     final trips = _summary?['total_trips'] ?? 0;
@@ -2121,16 +1909,15 @@ class _DriverHomeState extends State<DriverHome>
     return Row(children: [
       Expanded(
           child: _statCard(
-              icon: _IC.earnings,
+              icon: Icons.account_balance_wallet_outlined,
               iconColor: _t.green,
               iconBg: _o(_t.green, 0.12),
               label: 'TOTAL',
-              value:
-                  '₱${(allTime as num).toStringAsFixed(2)}')),
+              value: '₱${(allTime as num).toStringAsFixed(2)}')),
       const SizedBox(width: 6),
       Expanded(
           child: _statCard(
-              icon: _IC.tripCount,
+              icon: Icons.directions_car_outlined,
               iconColor: _t.accent,
               iconBg: _o(_t.accent, 0.12),
               label: 'TRIPS',
@@ -2138,24 +1925,20 @@ class _DriverHomeState extends State<DriverHome>
       const SizedBox(width: 6),
       Expanded(
           child: _statCard(
-              icon: _IC.todayEarnings,
+              icon: Icons.bar_chart_outlined,
               iconColor: _t.orange,
               iconBg: _o(_t.orange, 0.12),
               label: 'TODAY',
-              value:
-                  '₱${(todayEarnings as num).toStringAsFixed(2)}')),
+              value: '₱${(todayEarnings as num).toStringAsFixed(2)}')),
       const SizedBox(width: 6),
       Expanded(
           child: _statCard(
-              icon: _isOnline ? _IC.online : _IC.offline,
-              iconColor:
-                  _isOnline ? _t.green : _t.textMuted,
-              iconBg: _o(
-                  _isOnline ? _t.green : _t.textMuted, 0.12),
+              icon: _isOnline ? Icons.wifi_outlined : Icons.wifi_off_outlined,
+              iconColor: _isOnline ? _t.green : _t.textMuted,
+              iconBg: _o(_isOnline ? _t.green : _t.textMuted, 0.12),
               label: 'STATUS',
               value: _isOnline ? 'ON' : 'OFF',
-              valueColor:
-                  _isOnline ? _t.green : _t.textMuted)),
+              valueColor: _isOnline ? _t.green : _t.textMuted)),
     ]);
   }
 
@@ -2170,45 +1953,36 @@ class _DriverHomeState extends State<DriverHome>
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: _t.card,
+        color: _t.bgCard,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: _t.border, width: 1),
       ),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Container(
           width: 26,
           height: 26,
           decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(7)),
-          child:
-              Center(child: Icon(icon, color: iconColor, size: 14)),
+              color: iconBg, borderRadius: BorderRadius.circular(7)),
+          child: Center(child: Icon(icon, color: iconColor, size: 14)),
         ),
         const SizedBox(height: 5),
         Text(value,
             style: TextStyle(
                 color: valueColor ?? _t.textPrimary,
                 fontSize: 13,
-                fontWeight: FontWeight.w800),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis),
+                fontWeight: FontWeight.w800)),
         Text(label,
             style: TextStyle(
-                color: _t.textMuted,
-                fontSize: 7,
-                letterSpacing: 0.8)),
+                color: _t.textMuted, fontSize: 7, letterSpacing: 0.8)),
       ]),
     );
   }
 
   Widget _buildStatusBanner() {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: _t.card,
+        color: _t.bgCard,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: _t.border, width: 1),
       ),
@@ -2245,8 +2019,7 @@ class _DriverHomeState extends State<DriverHome>
         GestureDetector(
           onTap: _activeRide == null ? _toggleOnline : null,
           child: Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 12, vertical: 7),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: BoxDecoration(
               color: _activeRide != null
                   ? _o(_t.textMuted, 0.2)
@@ -2257,8 +2030,7 @@ class _DriverHomeState extends State<DriverHome>
               boxShadow: _activeRide == null
                   ? [
                       BoxShadow(
-                          color: _o(
-                              _isOnline ? _t.red : _t.green, 0.4),
+                          color: _o(_isOnline ? _t.red : _t.green, 0.4),
                           blurRadius: 10,
                           offset: const Offset(0, 3)),
                     ]
@@ -2267,10 +2039,10 @@ class _DriverHomeState extends State<DriverHome>
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(
                 _activeRide != null
-                    ? _IC.car
+                    ? Icons.directions_car
                     : _isOnline
-                        ? _IC.offline
-                        : _IC.online,
+                        ? Icons.wifi_off
+                        : Icons.wifi,
                 color: Colors.white,
                 size: 13,
               ),
@@ -2293,591 +2065,31 @@ class _DriverHomeState extends State<DriverHome>
     );
   }
 
-  Widget _buildMap() {
-    return Stack(children: [
-      FlutterMap(
-        mapController: _mapController,
-        options: MapOptions(
-          initialCenter: _driverLocation,
-          initialZoom: 15.0,
-          interactionOptions: const InteractionOptions(
-              flags: InteractiveFlag.all),
-        ),
-        children: [
-          TileLayer(
-            urlTemplate:
-                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.pasadanow.driver',
-            maxZoom: 19,
-          ),
-          if (_gpsAccuracy != null)
-            CircleLayer(circles: [
-              CircleMarker(
-                point: _driverLocation,
-                radius: _gpsAccuracy!,
-                useRadiusInMeter: true,
-                color: _o(_t.green, 0.07),
-                borderColor: _o(_t.green, 0.2),
-                borderStrokeWidth: 1.0,
-              ),
-            ]),
-          if (_routePoints.isNotEmpty)
-            PolylineLayer(polylines: [
-              Polyline(
-                points: _routePoints,
-                color: _o(Colors.black, 0.2),
-                strokeWidth: 6.0,
-              ),
-              Polyline(
-                points: _routePoints,
-                color: _t.accent,
-                strokeWidth: 4.0,
-              ),
-            ]),
-          MarkerLayer(markers: [
-            Marker(
-              point: _driverLocation,
-              width: 44,
-              height: 44,
-              child: _DriverMarker(
-                  isOnline: _isOnline,
-                  onlineColor: _t.green,
-                  offlineColor: _t.textMuted),
-            ),
-            if (_commuterLiveLocation != null && _activeRide != null)
-              Marker(
-                point: _commuterLiveLocation!,
-                width: 110,
-                height: 52,
-                alignment: Alignment.topCenter,
-                child:
-                    Column(mainAxisSize: MainAxisSize.min, children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 7, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: _t.accent,
-                      borderRadius: BorderRadius.circular(6),
-                      boxShadow: const [
-                        BoxShadow(
-                            color: Colors.black26, blurRadius: 4)
-                      ],
-                    ),
-                    child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                      _PulsingDot(color: Colors.white),
-                      const SizedBox(width: 4),
-                      Text(
-                        _activeRide!.passengerName.split(' ').first,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700),
-                      ),
-                    ]),
-                  ),
-                  const SizedBox(height: 2),
-                  Icon(Icons.person_pin_circle,
-                      color: _t.accent, size: 22),
-                ]),
-              ),
-            if (_activeRide != null && _activeRide!.hasValidPickup)
-              Marker(
-                point: _activeRide!.pickup,
-                width: 100,
-                height: 52,
-                alignment: Alignment.topCenter,
-                child: _RouteMarker(
-                    color: _t.green,
-                    icon: _IC.pickup,
-                    label: 'Pick up'),
-              ),
-            if (_activeRide != null && _activeRide!.hasValidDropoff)
-              Marker(
-                point: _activeRide!.dropoff,
-                width: 110,
-                height: 52,
-                alignment: Alignment.topCenter,
-                child: _RouteMarker(
-                    color: _t.red,
-                    icon: _IC.dropoff,
-                    label: 'Drop off'),
-              ),
-          ]),
-          const RichAttributionWidget(attributions: [
-            TextSourceAttribution('OpenStreetMap contributors'),
-          ]),
-        ],
-      ),
-      if (_routeLoading)
-        Container(
-          color: Colors.black38,
-          child: Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 18, vertical: 12),
-              decoration: BoxDecoration(
-                color: _t.card,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _t.border),
-              ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: _t.accent),
-                ),
-                const SizedBox(width: 10),
-                Text('Calculating route…',
-                    style: TextStyle(
-                        color: _t.textPrimary, fontSize: 12)),
-              ]),
-            ),
-          ),
-        ),
-      Positioned(
-        left: 10,
-        top: 10,
-        child: Column(children: [
-          _mapBtn(
-              Icons.add,
-              () => _mapController.move(
-                  _mapController.camera.center,
-                  _mapController.camera.zoom + 1)),
-          const SizedBox(height: 4),
-          _mapBtn(
-              Icons.remove,
-              () => _mapController.move(
-                  _mapController.camera.center,
-                  _mapController.camera.zoom - 1)),
-          const SizedBox(height: 4),
-          _mapBtn(_IC.gpsOn,
-              () => _mapController.move(_driverLocation, 15)),
-          if (_commuterLiveLocation != null) ...[
-            const SizedBox(height: 4),
-            _mapBtn(Icons.fit_screen, () {
-              final bounds = LatLngBounds.fromPoints(
-                  [_driverLocation, _commuterLiveLocation!]);
-              _mapController.fitCamera(CameraFit.bounds(
-                  bounds: bounds,
-                  padding: const EdgeInsets.all(60)));
-            }),
-          ] else if (_routePoints.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            _mapBtn(Icons.fit_screen_outlined, () {
-              final bounds =
-                  LatLngBounds.fromPoints(_routePoints);
-              _mapController.fitCamera(CameraFit.bounds(
-                  bounds: bounds,
-                  padding: const EdgeInsets.all(50)));
-            }),
-          ],
-        ]),
-      ),
-      if (_isTracking && _gpsAccuracy != null)
-        Positioned(
-          right: 8,
-          top: 8,
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 8, vertical: 5),
-            decoration: BoxDecoration(
-              color: _o(_t.mapOverlayBg, 0.9),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: _t.border),
-            ),
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                _PulsingDot(color: _t.green),
-                const SizedBox(width: 5),
-                Text('GPS LIVE',
-                    style: TextStyle(
-                        color: _t.green,
-                        fontSize: 8,
-                        fontWeight: FontWeight.w700)),
-              ]),
-              Text(
-                  '±${_gpsAccuracy!.toStringAsFixed(0)}m · $_gpsAccuracyLabel',
-                  style: TextStyle(
-                      color: _gpsAccuracyColor, fontSize: 8)),
-              Text(_gpsSpeedLabel,
-                  style: TextStyle(
-                      color: _t.textPrimary,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700)),
-            ]),
-          ),
-        ),
-      if (!_isOnline)
-        Positioned.fill(
-          child: IgnorePointer(
-            child: Container(
-              color: _o(Colors.black, 0.45),
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: _t.card,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: _t.border),
-                  ),
-                  child:
-                      Column(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(_IC.offline,
-                        color: _t.textMuted, size: 32),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Go online to start\naccepting rides',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          color: _t.textMuted,
-                          fontSize: 12,
-                          height: 1.5),
-                    ),
-                  ]),
-                ),
-              ),
-            ),
-          ),
-        ),
-      Positioned(
-        right: 6,
-        bottom: 4,
-        child: Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.75),
-            borderRadius: BorderRadius.circular(3),
-          ),
-          child: const Text('© OpenStreetMap',
-              style: TextStyle(fontSize: 7, color: Colors.black54)),
-        ),
-      ),
-    ]);
-  }
-
-  Widget _mapBtn(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: _o(_t.mapOverlayBg, 0.92),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: _t.border),
-          boxShadow: [
-            BoxShadow(
-                color: _o(Colors.black, 0.25), blurRadius: 4)
-          ],
-        ),
-        child: Center(
-            child: Icon(icon, color: _t.textPrimary, size: 16)),
-      ),
-    );
-  }
-
-  Widget _buildActiveRideBanner(AuthProvider auth) {
-    final ride = _activeRide!;
-    return Container(
-      decoration: BoxDecoration(
-        color: _t.bgLight,
-        border: Border(top: BorderSide(color: _t.border, width: 1)),
-        boxShadow: [
-          BoxShadow(
-              color: _o(Colors.black, 0.4),
-              blurRadius: 12,
-              offset: const Offset(0, -4)),
-        ],
-      ),
-      child: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(
-          12,
-          10,
-          12,
-          MediaQuery.of(context).padding.bottom + 10,
-        ),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Row(children: [
-            _statusPill(
-                Icons.radio_button_checked, 'Active Ride', _t.green),
-            const Spacer(),
-            _farePill(ride.fare),
-          ]),
-          const SizedBox(height: 10),
-          Row(children: [
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: _o(_t.accent, 0.2),
-              child: Text(ride.passengerName[0],
-                  style: TextStyle(
-                      color: _t.accent,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13)),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                Text(ride.passengerName,
-                    style: TextStyle(
-                        color: _t.textPrimary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13),
-                    overflow: TextOverflow.ellipsis),
-                Row(children: [
-                  Text(
-                    '${ride.distanceKm.toStringAsFixed(1)} km · ₱${ride.fare.toStringAsFixed(2)}',
-                    style:
-                        TextStyle(color: _t.textMuted, fontSize: 11),
-                  ),
-                  if (_commuterLiveLocation != null) ...[
-                    const SizedBox(width: 5),
-                    _PulsingDot(color: _t.accent),
-                    const SizedBox(width: 3),
-                    Text('Live',
-                        style: TextStyle(
-                            color: _t.accent, fontSize: 10)),
-                  ],
-                ]),
-              ]),
-            ),
-          ]),
-          const SizedBox(height: 8),
-          _routeRow(_IC.pickup, _t.green, 'Pickup', ride.pickupLabel),
-          const SizedBox(height: 4),
-          _routeRow(
-              _IC.dropoff, _t.red, 'Dropoff', ride.dropoffLabel),
-          const SizedBox(height: 8),
-          _fareBreakdownCard(ride),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 180,
-            child: ChatWidget(
-              rideId: ride.id.toString(),
-              username: auth.username ?? 'driver',
-              role: 'driver',
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(children: [
-            if (_commuterLiveLocation != null) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 8),
-                margin: const EdgeInsets.only(right: 8),
-                decoration: BoxDecoration(
-                  color: _o(_t.accent, 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                  border:
-                      Border.all(color: _o(_t.accent, 0.3)),
-                ),
-                child:
-                    Column(mainAxisSize: MainAxisSize.min, children: [
-                  Text('Commuter',
-                      style: TextStyle(
-                          color: _t.textMuted, fontSize: 9)),
-                  _PulsingDot(color: _t.accent),
-                  Text('Live',
-                      style:
-                          TextStyle(color: _t.accent, fontSize: 9)),
-                ]),
-              ),
-            ],
-            Expanded(
-              child: GestureDetector(
-                onTap: _loading ? null : _completeRide,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 13),
-                  decoration: BoxDecoration(
-                    color: _t.green,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                          color: _o(_t.green, 0.4),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4)),
-                    ],
-                  ),
-                  child: _loading
-                      ? const Center(
-                          child: SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2)))
-                      : const Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.center,
-                          children: [
-                            Icon(_IC.check,
-                                color: Colors.white, size: 18),
-                            SizedBox(width: 6),
-                            Text('Complete Ride',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 14)),
-                          ],
-                        ),
-                ),
-              ),
-            ),
-          ]),
-        ]),
-      ),
-    );
-  }
-
-  Widget _fareBreakdownCard(RideRequest ride) {
-    final cfg = _fareConfig;
-    final multiplier = cfg.surgeEnabled ? cfg.surgeMultiplier : 1.0;
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: _o(_t.orange, 0.06),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _o(_t.orange, 0.2)),
-      ),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-        _fareRow('Base fare',
-            '₱${cfg.baseFare.toStringAsFixed(2)}'),
-        _fareRow(
-            '${ride.distanceKm.toStringAsFixed(1)} km × ₱${cfg.perKmRate.toStringAsFixed(2)}',
-            '₱${(ride.distanceKm * cfg.perKmRate).toStringAsFixed(2)}'),
-        if (cfg.surgeEnabled)
-          _fareRow(
-              'Surge (×${multiplier.toStringAsFixed(1)})',
-              '+${((multiplier - 1) * 100).toStringAsFixed(0)}%',
-              valueColor: _t.orange),
-        if (cfg.bookingFee > 0)
-          _fareRow('Booking fee',
-              '₱${cfg.bookingFee.toStringAsFixed(2)}'),
-      ]),
-    );
-  }
-
-  Widget _fareRow(String label, String value,
-          {Color? valueColor}) =>
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-          Flexible(
-              child: Text(label,
-                  style:
-                      TextStyle(color: _t.textMuted, fontSize: 11),
-                  overflow: TextOverflow.ellipsis)),
-          const SizedBox(width: 8),
-          Text(value,
-              style: TextStyle(
-                  color: valueColor ?? _t.textPrimary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600)),
-        ]),
-      );
-
-  Widget _statusPill(IconData icon, String label, Color color) {
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-      decoration: BoxDecoration(
-        color: _o(color, 0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _o(color, 0.3)),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, color: color, size: 11),
-        const SizedBox(width: 4),
-        Text(label,
-            style: TextStyle(
-                color: color,
-                fontSize: 11,
-                fontWeight: FontWeight.w700)),
-      ]),
-    );
-  }
-
-  Widget _farePill(double fare) {
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-      decoration: BoxDecoration(
-        color: _o(_t.orange, 0.12),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _o(_t.orange, 0.35)),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(_IC.license, color: _t.orange, size: 14),
-        const SizedBox(width: 4),
-        Text('₱${fare.toStringAsFixed(2)}',
-            style: TextStyle(
-                color: _t.orange,
-                fontWeight: FontWeight.w800,
-                fontSize: 14)),
-      ]),
-    );
-  }
-
-  Widget _routeRow(
-      IconData icon, Color color, String heading, String sub) {
-    return Row(children: [
-      Icon(icon, color: color, size: 16),
-      const SizedBox(width: 6),
-      Expanded(
-        child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-          Text(heading,
-              style: TextStyle(
-                  color: color,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600)),
-          Text(sub,
-              style:
-                  TextStyle(color: _t.textPrimary, fontSize: 11),
-              overflow: TextOverflow.ellipsis),
-        ]),
-      ),
-    ]);
-  }
+  // ─────────────────────────────────────────────────────────────────────────
+  // EARNINGS TAB
+  // ─────────────────────────────────────────────────────────────────────────
 
   Widget _buildEarningsTab() {
     return RefreshIndicator(
       color: _t.accent,
-      backgroundColor: _t.card,
+      backgroundColor: _t.bgCard,
       onRefresh: _loadEarnings,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(14, 14, 14,
-            MediaQuery.of(context).padding.bottom + 14),
+        padding: EdgeInsets.fromLTRB(
+            14, 14, 14, MediaQuery.of(context).padding.bottom + 14),
         children: [
           Container(
             margin: const EdgeInsets.only(bottom: 14),
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: _t.card,
+              color: _t.bgCard,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: _o(_t.accent, 0.3), width: 1),
             ),
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
-                Icon(_IC.priceChange, color: _t.accent, size: 15),
+                Icon(Icons.price_change_outlined, color: _t.accent, size: 15),
                 const SizedBox(width: 6),
                 Text('Current Fare Rates',
                     style: TextStyle(
@@ -2887,18 +2099,15 @@ class _DriverHomeState extends State<DriverHome>
                 const Spacer(),
                 if (_fareConfig.surgeEnabled)
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: _o(_t.orange, 0.15),
                       borderRadius: BorderRadius.circular(5),
-                      border:
-                          Border.all(color: _o(_t.orange, 0.4)),
+                      border: Border.all(color: _o(_t.orange, 0.4)),
                     ),
-                    child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                      Icon(_IC.bolt, color: _t.orange, size: 10),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.bolt, color: _t.orange, size: 10),
                       const SizedBox(width: 2),
                       Text(
                           'SURGE ×${_fareConfig.surgeMultiplier.toStringAsFixed(1)}',
@@ -2910,14 +2119,14 @@ class _DriverHomeState extends State<DriverHome>
                   ),
               ]),
               const SizedBox(height: 10),
-              _infoRow(_IC.flag, 'Base Fare',
+              _infoRow(Icons.flag_outlined, 'Base Fare',
                   '₱${_fareConfig.baseFare.toStringAsFixed(2)}'),
               _infoRow(Icons.straighten_outlined, 'Per-km Rate',
                   '₱${_fareConfig.perKmRate.toStringAsFixed(2)}/km'),
               _infoRow(Icons.arrow_downward_outlined, 'Minimum Fare',
                   '₱${_fareConfig.minimumFare.toStringAsFixed(2)}'),
               if (_fareConfig.bookingFee > 0)
-                _infoRow(_IC.receipt, 'Booking Fee',
+                _infoRow(Icons.receipt_outlined, 'Booking Fee',
                     '₱${_fareConfig.bookingFee.toStringAsFixed(2)}'),
               Divider(color: _t.border, height: 14),
               Text(
@@ -2925,30 +2134,23 @@ class _DriverHomeState extends State<DriverHome>
                   '(₱${_fareConfig.baseFare.toStringAsFixed(0)} + ₱${_fareConfig.perKmRate.toStringAsFixed(0)}×km)'
                   '${_fareConfig.surgeEnabled ? ' ×${_fareConfig.surgeMultiplier.toStringAsFixed(1)}' : ''}'
                   '${_fareConfig.bookingFee > 0 ? ' + ₱${_fareConfig.bookingFee.toStringAsFixed(0)}' : ''})',
-                  style: TextStyle(
-                      color: _t.textMuted,
-                      fontSize: 9,
-                      fontStyle: FontStyle.italic)),
+                  style: TextStyle(color: _t.textMuted, fontSize: 9)),
             ]),
           ),
           if (_summary != null) ...[
             Row(children: [
               Expanded(
-                  child: _earningsStat(
-                      _IC.todayEarnings,
-                      'Today',
+                  child: _earningsStat(Icons.today_outlined, 'Today',
                       '₱${(_summary!['today'] as num).toStringAsFixed(2)}')),
               const SizedBox(width: 10),
               Expanded(
-                  child: _earningsStat(
-                      Icons.emoji_events_outlined,
-                      'All-time',
+                  child: _earningsStat(Icons.emoji_events_outlined, 'All-time',
                       '₱${(_summary!['all_time'] as num).toStringAsFixed(2)}')),
             ]),
             const SizedBox(height: 14),
           ],
           Row(children: [
-            Icon(_IC.receipt, color: _t.textPrimary, size: 16),
+            Icon(Icons.receipt_long_outlined, color: _t.textPrimary, size: 16),
             const SizedBox(width: 7),
             Text('Earnings & History',
                 style: TextStyle(
@@ -2960,15 +2162,12 @@ class _DriverHomeState extends State<DriverHome>
           if (_earnings.isEmpty)
             Center(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 40),
+                padding: const EdgeInsets.symmetric(vertical: 40),
                 child: Column(children: [
-                  Icon(_IC.receipt,
-                      color: _t.textMuted, size: 48),
+                  Icon(Icons.receipt_outlined, color: _t.textMuted, size: 48),
                   const SizedBox(height: 10),
                   Text('No earnings yet.',
-                      style: TextStyle(
-                          color: _t.textMuted, fontSize: 14)),
+                      style: TextStyle(color: _t.textMuted, fontSize: 14)),
                 ]),
               ),
             )
@@ -2977,15 +2176,14 @@ class _DriverHomeState extends State<DriverHome>
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: _t.card,
+                    color: _t.bgCard,
                     borderRadius: BorderRadius.circular(12),
-                    border:
-                        Border.all(color: _t.border, width: 1),
+                    border: Border.all(color: _t.border, width: 1),
                   ),
                   child: Row(children: [
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 38,
+                      height: 38,
                       decoration: BoxDecoration(
                         color: _o(_t.green, 0.12),
                         borderRadius: BorderRadius.circular(10),
@@ -2998,21 +2196,19 @@ class _DriverHomeState extends State<DriverHome>
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                        Text('₱${e['amount']}',
-                            style: TextStyle(
-                                color: _t.textPrimary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14)),
-                        Text('Ride #${e['ride']} · ${e['date']}',
-                            style: TextStyle(
-                                color: _t.textMuted,
-                                fontSize: 11)),
-                      ]),
+                            Text('₱${e['amount']}',
+                                style: TextStyle(
+                                    color: _t.textPrimary,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14)),
+                            Text('Ride #${e['ride']} · ${e['date']}',
+                                style: TextStyle(
+                                    color: _t.textMuted, fontSize: 11)),
+                          ]),
                     ),
-                    Icon(_IC.check, color: _t.green, size: 16),
+                    Icon(Icons.check_circle_outline, color: _t.green, size: 16),
                   ]),
                 )),
         ],
@@ -3020,476 +2216,291 @@ class _DriverHomeState extends State<DriverHome>
     );
   }
 
-  Widget _earningsStat(
-      IconData icon, String label, String value) {
+  Widget _earningsStat(IconData icon, String label, String value) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _t.card,
+        color: _t.bgCard,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _t.border, width: 1),
       ),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Icon(icon, color: _t.textMuted, size: 13),
           const SizedBox(width: 4),
-          Text(label,
-              style:
-                  TextStyle(color: _t.textMuted, fontSize: 11)),
+          Text(label, style: TextStyle(color: _t.textMuted, fontSize: 11)),
         ]),
         const SizedBox(height: 4),
         Text(value,
             style: TextStyle(
-                color: _t.green,
-                fontSize: 20,
-                fontWeight: FontWeight.w800)),
+                color: _t.green, fontSize: 20, fontWeight: FontWeight.w800)),
       ]),
     );
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PROFILE TAB
+  // ─────────────────────────────────────────────────────────────────────────
 
   Widget _buildProfileTab(AuthProvider auth) {
     final profile = _driverProfile;
 
     if (_profileLoading && profile == null) {
-      return Center(
-          child: CircularProgressIndicator(color: _t.accent));
+      return Center(child: CircularProgressIndicator(color: _t.accent));
     }
 
     return RefreshIndicator(
       color: _t.accent,
-      backgroundColor: _t.card,
+      backgroundColor: _t.bgCard,
       onRefresh: _loadDriverProfile,
       child: ListView(
-        padding: EdgeInsets.zero,
+        padding: EdgeInsets.fromLTRB(
+            14, 14, 14, MediaQuery.of(context).padding.bottom + 14),
         children: [
-          Container(
-            width: double.infinity,
-            color: _t.bgLight,
-            padding: const EdgeInsets.fromLTRB(20, 36, 20, 28),
+          _buildProfileHeroCard(auth, profile),
+          const SizedBox(height: 14),
+          if (_gpsAccuracy != null) ...[
+            _buildGpsCard(),
+            const SizedBox(height: 14),
+          ],
+          _buildEditableSection(
+            title: 'Personal Information',
+            icon: Icons.badge_outlined,
+            dotColor: _t.accent,
+            onEdit: () => _showEditDialog(
+              title: 'Edit Personal Info',
+              fields: [
+                _EditField('Full Name', 'full_name', profile?.fullName ?? ''),
+                _EditField('Age', 'age', profile?.age ?? '',
+                    keyboardType: TextInputType.number),
+                _EditField('Phone', 'phone', profile?.phone ?? '',
+                    keyboardType: TextInputType.phone),
+                _EditField('Email', 'email', profile?.email ?? '',
+                    keyboardType: TextInputType.emailAddress),
+                _EditField('Address', 'address', profile?.address ?? ''),
+              ],
+            ),
             child: Column(children: [
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  _buildAvatarWidget(radius: 44, fontSize: 34),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: GestureDetector(
-                      onTap: _pickAndUploadProfilePhoto,
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: _t.accent,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                              color: _t.bgLight, width: 2),
-                        ),
-                        child: const Icon(_IC.camera,
-                            color: Colors.white, size: 14),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Text(
-                profile?.fullName.isNotEmpty == true
-                    ? profile!.fullName
-                    : auth.username ?? 'Driver',
-                style: TextStyle(
-                    color: _t.textPrimary,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 2),
-              Text('@${auth.username ?? ''}',
-                  style: TextStyle(
-                      color: _t.textMuted, fontSize: 12)),
-              const SizedBox(height: 8),
-              if (profile?.phone.isNotEmpty == true)
-                Text(profile!.phone,
-                    style: TextStyle(
-                        color: _t.textMuted, fontSize: 12)),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 5),
-                decoration: BoxDecoration(
-                  color: _o(
-                      _isOnline ? _t.green : _t.textMuted, 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                      color: _o(
-                          _isOnline ? _t.green : _t.textMuted,
-                          0.25)),
-                ),
-                child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                  Icon(
-                    _isOnline
-                        ? Icons.circle
-                        : Icons.circle_outlined,
-                    color:
-                        _isOnline ? _t.green : _t.textMuted,
-                    size: 9,
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    _isOnline
-                        ? 'Online — Accepting Rides'
-                        : 'Offline',
-                    style: TextStyle(
-                        color: _isOnline
-                            ? _t.green
-                            : _t.textMuted,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600),
-                  ),
-                ]),
-              ),
-            ]),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: Row(children: [
-              _profileStatBox(
-                  'Total Trips',
-                  (_summary?['total_trips'] ?? 0).toString(),
-                  _t.accent),
-              const SizedBox(width: 10),
-              _profileStatBox(
-                  'Today',
-                  '₱${(_summary?['today'] as num? ?? 0).toStringAsFixed(2)}',
-                  _t.green),
-              const SizedBox(width: 10),
-              _profileStatBox(
-                  'All-time',
-                  '₱${(_summary?['all_time'] as num? ?? 0).toStringAsFixed(2)}',
-                  _t.orange),
+              _infoRow(
+                  Icons.person_outline,
+                  'Full Name',
+                  profile?.fullName.isNotEmpty == true
+                      ? profile!.fullName
+                      : '—'),
+              _infoRow(Icons.cake_outlined, 'Age',
+                  profile?.age.isNotEmpty == true ? profile!.age : '—'),
+              _infoRow(Icons.phone_outlined, 'Phone',
+                  profile?.phone.isNotEmpty == true ? profile!.phone : '—'),
+              _infoRow(Icons.email_outlined, 'Email',
+                  profile?.email.isNotEmpty == true ? profile!.email : '—'),
+              _infoRow(Icons.location_on_outlined, 'Address',
+                  profile?.address.isNotEmpty == true ? profile!.address : '—'),
             ]),
           ),
           const SizedBox(height: 14),
-          if (_isTracking)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-              child: Container(
-                padding: const EdgeInsets.all(14),
+          _buildEditableSection(
+            title: 'Vehicle & License',
+            icon: Icons.directions_car_outlined,
+            dotColor: _t.orange,
+            onEdit: () => _showEditDialog(
+              title: 'Edit Vehicle Info',
+              fields: [
+                _EditField(
+                    'Plate Number', 'plate_number', profile?.plateNumber ?? ''),
+                _EditField("Driver's License No.", 'license_number',
+                    profile?.licenseNumber ?? ''),
+                _EditField('Organization / TODA', 'organization',
+                    profile?.organization ?? ''),
+              ],
+            ),
+            child: Column(children: [
+              _infoRow(
+                  Icons.pin_outlined,
+                  'Plate Number',
+                  profile?.plateNumber.isNotEmpty == true
+                      ? profile!.plateNumber
+                      : '—'),
+              _infoRow(
+                  Icons.credit_card_outlined,
+                  'License No.',
+                  profile?.licenseNumber.isNotEmpty == true
+                      ? profile!.licenseNumber
+                      : '—'),
+              _infoRow(
+                  Icons.store_outlined,
+                  'Organization',
+                  profile?.organization.isNotEmpty == true
+                      ? profile!.organization
+                      : '—'),
+            ]),
+          ),
+          const SizedBox(height: 14),
+          _buildDocumentsSection(profile),
+          const SizedBox(height: 14),
+          _infoCard(
+            dotColor: _t.accent,
+            title: 'Account Info',
+            titleIcon: Icons.manage_accounts_outlined,
+            child: Column(children: [
+              _infoRow(Icons.person_outline, 'Username', auth.username ?? '—'),
+              _infoRow(Icons.verified_user_outlined, 'Role', 'Driver'),
+              _infoRow(
+                  Icons.business_outlined,
+                  'Organization',
+                  profile?.organization.isNotEmpty == true
+                      ? profile!.organization
+                      : '—'),
+            ]),
+          ),
+          const SizedBox(height: 14),
+          // ── THEME TOGGLE ─────────────────────────────────────────────
+          Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            decoration: BoxDecoration(
+              color: _t.bgCard,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _t.border, width: 1),
+            ),
+            child: Row(children: [
+              Container(
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  color: _t.card,
-                  borderRadius: BorderRadius.circular(12),
-                  border:
-                      Border.all(color: _o(_t.green, 0.3)),
+                  color:
+                      _o(_themeProvider.isDark ? _t.accent : _t.orange, 0.12),
+                  borderRadius: BorderRadius.circular(9),
                 ),
+                child: Icon(
+                  _themeProvider.isDark
+                      ? Icons.dark_mode_rounded
+                      : Icons.light_mode_rounded,
+                  color: _themeProvider.isDark ? _t.accent : _t.orange,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                  Row(children: [
-                    _PulsingDot(color: _t.green),
-                    const SizedBox(width: 8),
-                    Text('Live GPS Status',
+                      Text(
+                        _themeProvider.isDark ? 'Dark Mode' : 'Light Mode',
                         style: TextStyle(
                             color: _t.textPrimary,
                             fontSize: 13,
-                            fontWeight: FontWeight.w700)),
-                  ]),
-                  const SizedBox(height: 12),
-                  _infoRow(_IC.gpsOn, 'Accuracy',
-                      '±${_gpsAccuracy?.toStringAsFixed(0) ?? '—'} m ($_gpsAccuracyLabel)',
-                      valueColor: _gpsAccuracyColor),
-                  _infoRow(
-                      _IC.speed, 'Speed', _gpsSpeedLabel),
-                  _infoRow(
-                    _IC.location,
-                    'Position',
-                    '${_driverLocation.latitude.toStringAsFixed(5)}, '
-                        '${_driverLocation.longitude.toStringAsFixed(5)}',
+                            fontWeight: FontWeight.w700),
+                      ),
+                      Text(
+                        _themeProvider.isDark
+                            ? 'Tap to switch to light mode'
+                            : 'Tap to switch to dark mode',
+                        style: TextStyle(color: _t.textMuted, fontSize: 11),
+                      ),
+                    ]),
+              ),
+              GestureDetector(
+                onTap: () => setState(() => _themeProvider.toggle()),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  width: 48,
+                  height: 28,
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color:
+                        _themeProvider.isDark ? _t.accent : _o(_t.orange, 0.9),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  _infoRow(_IC.online, 'Push',
-                      _isOnline
-                          ? 'Broadcasting every 2s'
-                          : 'Offline'),
-                ]),
+                  child: Stack(children: [
+                    AnimatedAlign(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                      alignment: _themeProvider.isDark
+                          ? Alignment.centerLeft
+                          : Alignment.centerRight,
+                      child: Container(
+                        width: 22,
+                        height: 22,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          _themeProvider.isDark
+                              ? Icons.dark_mode_rounded
+                              : Icons.light_mode_rounded,
+                          color: _themeProvider.isDark ? _t.accent : _t.orange,
+                          size: 13,
+                        ),
+                      ),
+                    ),
+                  ]),
+                ),
               ),
-            ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-            child: _buildEditableSection(
-              title: 'Personal Information',
-              icon: _IC.badge,
-              accentColor: _t.accent,
-              onEdit: () => _showEditDialog(
-                title: 'Edit Personal Info',
-                fields: [
-                  _EditField('Full Name', 'full_name',
-                      profile?.fullName ?? ''),
-                  _EditField('Age', 'age',
-                      profile?.age ?? '',
-                      keyboardType: TextInputType.number),
-                  _EditField('Phone', 'phone',
-                      profile?.phone ?? '',
-                      keyboardType: TextInputType.phone),
-                  _EditField('Email', 'email',
-                      profile?.email ?? '',
-                      keyboardType:
-                          TextInputType.emailAddress),
-                  _EditField('Address', 'address',
-                      profile?.address ?? ''),
-                ],
-              ),
-              child: Column(children: [
-                _infoRow(
-                    _IC.person,
-                    'Full Name',
-                    profile?.fullName.isNotEmpty == true
-                        ? profile!.fullName
-                        : '—'),
-                _infoRow(
-                    _IC.age,
-                    'Age',
-                    profile?.age.isNotEmpty == true
-                        ? profile!.age
-                        : '—'),
-                _infoRow(
-                    _IC.phone,
-                    'Phone',
-                    profile?.phone.isNotEmpty == true
-                        ? profile!.phone
-                        : '—'),
-                _infoRow(
-                    _IC.email,
-                    'Email',
-                    profile?.email.isNotEmpty == true
-                        ? profile!.email
-                        : '—'),
-                _infoRow(
-                    _IC.location,
-                    'Address',
-                    profile?.address.isNotEmpty == true
-                        ? profile!.address
-                        : '—'),
-              ]),
-            ),
+            ]),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-            child: _buildEditableSection(
-              title: 'Vehicle & License',
-              icon: _IC.car,
-              accentColor: _t.orange,
-              onEdit: () => _showEditDialog(
-                title: 'Edit Vehicle Info',
-                fields: [
-                  _EditField('Plate Number', 'plate_number',
-                      profile?.plateNumber ?? ''),
-                  _EditField("Driver's License No.",
-                      'license_number',
-                      profile?.licenseNumber ?? ''),
-                  _EditField('Organization / TODA',
-                      'organization',
-                      profile?.organization ?? ''),
-                ],
-              ),
-              child: Column(children: [
-                _infoRow(
-                    _IC.plate,
-                    'Plate Number',
-                    profile?.plateNumber.isNotEmpty == true
-                        ? profile!.plateNumber
-                        : '—'),
-                _infoRow(
-                    _IC.license,
-                    'License No.',
-                    profile?.licenseNumber.isNotEmpty == true
-                        ? profile!.licenseNumber
-                        : '—'),
-                _infoRow(
-                    _IC.org,
-                    'Organization',
-                    profile?.organization.isNotEmpty == true
-                        ? profile!.organization
-                        : '—'),
-              ]),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-            child: _buildDocumentsSection(profile),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+          // ── CHANGE PASSWORD ───────────────────────────────────────────
+          GestureDetector(
+            onTap: () => _showChangePasswordDialog(),
             child: Container(
+              margin: const EdgeInsets.only(bottom: 14),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: _t.card,
+                color: _o(_t.accent, 0.06),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _t.border, width: 1),
-              ),
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                Row(children: [
-                  Icon(_IC.manage, color: _t.accent, size: 15),
-                  const SizedBox(width: 6),
-                  Text('Account Info',
-                      style: TextStyle(
-                          color: _t.textPrimary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700)),
-                ]),
-                const SizedBox(height: 12),
-                _infoRow(_IC.person, 'Username',
-                    auth.username ?? '—'),
-                _infoRow(_IC.role, 'Role', 'Driver'),
-                _infoRow(
-                    _IC.org,
-                    'Organization',
-                    profile?.organization.isNotEmpty == true
-                        ? profile!.organization
-                        : '—'),
-              ]),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 13),
-              decoration: BoxDecoration(
-                color: _t.card,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _t.border, width: 1),
+                border: Border.all(color: _o(_t.accent, 0.3)),
               ),
               child: Row(children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: _o(
-                        _themeProvider.isDark
-                            ? _t.accent
-                            : _t.orange,
-                        0.12),
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: Icon(
-                    _themeProvider.isDark
-                        ? Icons.dark_mode_rounded
-                        : Icons.light_mode_rounded,
-                    color: _themeProvider.isDark
-                        ? _t.accent
-                        : _t.orange,
-                    size: 18,
-                  ),
-                ),
+                Icon(Icons.lock_outline_rounded, color: _t.accent, size: 18),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                    Text(
-                      _themeProvider.isDark
-                          ? 'Dark Mode'
-                          : 'Light Mode',
-                      style: TextStyle(
-                          color: _t.textPrimary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700),
-                    ),
-                    Text(
-                      _themeProvider.isDark
-                          ? 'Tap to switch to light mode'
-                          : 'Tap to switch to dark mode',
-                      style: TextStyle(
-                          color: _t.textMuted, fontSize: 11),
-                    ),
-                  ]),
+                        Text('Change Password',
+                            style: TextStyle(
+                                color: _t.textPrimary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 2),
+                        Text('Update your account password',
+                            style:
+                                TextStyle(color: _t.textMuted, fontSize: 11)),
+                      ]),
                 ),
-                GestureDetector(
-                  onTap: () =>
-                      setState(() => _themeProvider.toggle()),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    width: 48,
-                    height: 28,
-                    padding: const EdgeInsets.all(3),
-                    decoration: BoxDecoration(
-                      color: _themeProvider.isDark
-                          ? _t.accent
-                          : _o(_t.orange, 0.9),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Stack(children: [
-                      AnimatedAlign(
-                        duration:
-                            const Duration(milliseconds: 250),
-                        curve: Curves.easeInOut,
-                        alignment: _themeProvider.isDark
-                            ? Alignment.centerLeft
-                            : Alignment.centerRight,
-                        child: Container(
-                          width: 22,
-                          height: 22,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            _themeProvider.isDark
-                                ? Icons.dark_mode_rounded
-                                : Icons.light_mode_rounded,
-                            color: _themeProvider.isDark
-                                ? _t.accent
-                                : _t.orange,
-                            size: 13,
-                          ),
-                        ),
-                      ),
-                    ]),
-                  ),
-                ),
+                Icon(Icons.chevron_right_rounded,
+                    color: _t.textMuted, size: 20),
               ]),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
-            child: GestureDetector(
-              onTap: () async {
-                if (_isOnline) await _toggleOnline();
-                await auth.logout();
-                if (context.mounted) {
-                  Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const LoginScreen()));
-                }
-              },
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 14),
-                decoration: BoxDecoration(
-                  color: _o(_t.red, 0.08),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                      color: _o(_t.red, 0.3), width: 1),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(_IC.signOut, color: _t.red, size: 18),
-                    const SizedBox(width: 7),
-                    Text('Sign Out',
-                        style: TextStyle(
-                            color: _t.red,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14)),
-                  ],
-                ),
+          // ── SIGN OUT ──────────────────────────────────────────────────
+          GestureDetector(
+            onTap: () async {
+              if (_isOnline) await _toggleOnline();
+              await auth.logout();
+              if (context.mounted) {
+                Navigator.pushReplacement(context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()));
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              decoration: BoxDecoration(
+                color: _o(_t.red, 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _o(_t.red, 0.3), width: 1),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.logout_outlined, color: _t.red, size: 18),
+                  const SizedBox(width: 7),
+                  Text('Sign Out',
+                      style: TextStyle(
+                          color: _t.red,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14)),
+                ],
               ),
             ),
           ),
@@ -3498,105 +2509,133 @@ class _DriverHomeState extends State<DriverHome>
     );
   }
 
-  Widget _profileStatBox(
-          String label, String value, Color color) =>
-      Expanded(
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: _t.card,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _t.border),
-          ),
-          child: Column(children: [
-            Text(value,
-                style: TextStyle(
-                    color: color,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 4),
-            Text(label,
-                style: TextStyle(
-                    color: _t.textMuted,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600)),
-          ]),
-        ),
-      );
-
-  Widget _buildEditableSection({
-    required String title,
-    required IconData icon,
-    required Color accentColor,
-    required VoidCallback onEdit,
-    required Widget child,
-  }) {
+  Widget _buildProfileHeroCard(AuthProvider auth, DriverProfile? profile) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: _t.card,
-        borderRadius: BorderRadius.circular(12),
+        color: _t.bgCard,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _t.border, width: 1),
       ),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(children: [
+        Stack(
           children: [
-        Row(children: [
-          Icon(icon, color: accentColor, size: 15),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(title,
-                style: TextStyle(
-                    color: _t.textPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700)),
-          ),
-          GestureDetector(
-            onTap: onEdit,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: _o(accentColor, 0.12),
-                borderRadius: BorderRadius.circular(8),
-                border:
-                    Border.all(color: _o(accentColor, 0.3)),
+            _buildAvatarWidget(radius: 40, fontSize: 30),
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: GestureDetector(
+                onTap: _pickAndUploadProfilePhoto,
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: _t.accent,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: _t.bgCard, width: 2),
+                  ),
+                  child: const Icon(Icons.camera_alt_rounded,
+                      color: Colors.white, size: 13),
+                ),
               ),
-              child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                Icon(_IC.edit, color: accentColor, size: 12),
-                const SizedBox(width: 4),
-                Text('Edit',
-                    style: TextStyle(
-                        color: accentColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700)),
-              ]),
             ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Text(
+          profile?.fullName.isNotEmpty == true
+              ? profile!.fullName
+              : auth.username ?? 'Driver',
+          style: TextStyle(
+              color: _t.textPrimary, fontSize: 17, fontWeight: FontWeight.w800),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 2),
+        Text('@${auth.username ?? ''}',
+            style: TextStyle(color: _t.textMuted, fontSize: 11)),
+        const SizedBox(height: 7),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
+          decoration: BoxDecoration(
+            color: _o(_isOnline ? _t.green : _t.textMuted, 0.12),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+                color: _o(_isOnline ? _t.green : _t.textMuted, 0.3), width: 1),
           ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(
+              _isOnline ? Icons.circle : Icons.circle_outlined,
+              color: _isOnline ? _t.green : _t.textMuted,
+              size: 9,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              _isOnline ? 'Online — Accepting Rides' : 'Offline',
+              style: TextStyle(
+                  color: _isOnline ? _t.green : _t.textMuted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600),
+            ),
+          ]),
+        ),
+        if (profile?.phone.isNotEmpty == true) ...[
+          const SizedBox(height: 6),
+          Text(profile!.phone,
+              style: TextStyle(color: _t.textMuted, fontSize: 11)),
+        ],
+      ]),
+    );
+  }
+
+  Widget _buildGpsCard() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _t.bgCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _o(_t.green, 0.3), width: 1),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          _PulsingDot(color: _t.green),
+          const SizedBox(width: 7),
+          Text('Live GPS Status',
+              style: TextStyle(
+                  color: _t.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700)),
         ]),
-        const SizedBox(height: 12),
-        child,
+        const SizedBox(height: 10),
+        _infoRow(
+          Icons.gps_fixed_outlined,
+          'Accuracy',
+          '±${_gpsAccuracy!.toStringAsFixed(0)} m ($_gpsAccuracyLabel)',
+          valueColor: _gpsAccuracyColor,
+        ),
+        _infoRow(Icons.speed_outlined, 'Speed', _gpsSpeedLabel),
+        _infoRow(
+          Icons.location_on_outlined,
+          'Position',
+          '${_driverLocation.latitude.toStringAsFixed(5)}, '
+              '${_driverLocation.longitude.toStringAsFixed(5)}',
+        ),
+        _infoRow(Icons.sync_outlined, 'Push',
+            _isOnline ? 'Broadcasting every 2s' : 'Offline'),
       ]),
     );
   }
 
   Widget _buildDocumentsSection(DriverProfile? profile) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _t.card,
+        color: _t.bgCard,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _t.border, width: 1),
       ),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Icon(_IC.folder, color: _t.orange, size: 15),
+          Icon(Icons.folder_outlined, color: _t.orange, size: 15),
           const SizedBox(width: 6),
           Text('Credential Documents',
               style: TextStyle(
@@ -3608,14 +2647,14 @@ class _DriverHomeState extends State<DriverHome>
         _buildDocumentRow(
           label: "Driver's License",
           photoUrl: profile?.licensePhotoUrl,
-          icon: _IC.license,
+          icon: Icons.credit_card_outlined,
           slot: _DocSlot.license,
         ),
         const SizedBox(height: 8),
         _buildDocumentRow(
           label: 'Vehicle / Plate',
           photoUrl: profile?.vehiclePhotoUrl,
-          icon: _IC.car,
+          icon: Icons.directions_car_outlined,
           slot: _DocSlot.vehicle,
         ),
         const SizedBox(height: 8),
@@ -3646,8 +2685,7 @@ class _DriverHomeState extends State<DriverHome>
           color: _o(hasPhoto ? _t.green : _t.textMuted, 0.06),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-              color: _o(hasPhoto ? _t.green : _t.border, 0.4),
-              width: 1),
+              color: _o(hasPhoto ? _t.green : _t.border, 0.4), width: 1),
         ),
         child: Row(children: [
           ClipRRect(
@@ -3655,22 +2693,18 @@ class _DriverHomeState extends State<DriverHome>
             child: hasPhoto
                 ? (isBase64
                     ? Image.memory(base64Decode(photoUrl),
-                        width: 50,
-                        height: 50,
-                        fit: BoxFit.cover)
+                        width: 50, height: 50, fit: BoxFit.cover)
                     : Image.network(photoUrl,
                         width: 50,
                         height: 50,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            _docPlaceholder(icon)))
+                        errorBuilder: (_, __, ___) => _docPlaceholder(icon)))
                 : _docPlaceholder(icon),
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(label,
                   style: TextStyle(
                       color: _t.textPrimary,
@@ -3680,7 +2714,7 @@ class _DriverHomeState extends State<DriverHome>
               Row(children: [
                 Icon(
                   hasPhoto
-                      ? _IC.check
+                      ? Icons.check_circle_outline_rounded
                       : Icons.upload_outlined,
                   size: 11,
                   color: hasPhoto ? _t.green : _t.textMuted,
@@ -3688,13 +2722,9 @@ class _DriverHomeState extends State<DriverHome>
                 const SizedBox(width: 3),
                 Flexible(
                   child: Text(
-                    hasPhoto
-                        ? 'Uploaded — tap to replace'
-                        : 'Tap to upload',
+                    hasPhoto ? 'Uploaded — tap to replace' : 'Tap to upload',
                     style: TextStyle(
-                        color: hasPhoto
-                            ? _t.green
-                            : _t.textMuted,
+                        color: hasPhoto ? _t.green : _t.textMuted,
                         fontSize: 10),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -3702,8 +2732,7 @@ class _DriverHomeState extends State<DriverHome>
               ]),
             ]),
           ),
-          Icon(Icons.chevron_right_rounded,
-              color: _t.textMuted, size: 18),
+          Icon(Icons.chevron_right_rounded, color: _t.textMuted, size: 18),
         ]),
       ),
     );
@@ -3747,31 +2776,55 @@ class _DriverHomeState extends State<DriverHome>
     }
   }
 
-  Widget _infoRow(IconData icon, String label, String value,
-      {Color? valueColor}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(children: [
-            Icon(icon, color: _t.textMuted, size: 13),
-            const SizedBox(width: 5),
-            Text(label,
-                style: TextStyle(
-                    color: _t.textMuted, fontSize: 12)),
-          ]),
-          Flexible(
-            child: Text(value,
-                textAlign: TextAlign.right,
-                style: TextStyle(
-                    color: valueColor ?? _t.textPrimary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600),
-                overflow: TextOverflow.ellipsis),
-          ),
-        ],
+  Widget _buildEditableSection({
+    required String title,
+    required IconData icon,
+    required Color dotColor,
+    required VoidCallback onEdit,
+    required Widget child,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _t.bgCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _t.border, width: 1),
       ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(icon, color: dotColor, size: 15),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(title,
+                style: TextStyle(
+                    color: _t.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700)),
+          ),
+          GestureDetector(
+            onTap: onEdit,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: BoxDecoration(
+                color: _o(_t.accent, 0.12),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: _o(_t.accent, 0.3)),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.edit_outlined, color: _t.accent, size: 11),
+                const SizedBox(width: 3),
+                Text('Edit',
+                    style: TextStyle(
+                        color: _t.accent,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700)),
+              ]),
+            ),
+          ),
+        ]),
+        const SizedBox(height: 10),
+        child,
+      ]),
     );
   }
 
@@ -3780,16 +2833,15 @@ class _DriverHomeState extends State<DriverHome>
     required List<_EditField> fields,
   }) {
     final controllers = {
-      for (final f in fields)
-        f.key: TextEditingController(text: f.initialValue)
+      for (final f in fields) f.key: TextEditingController(text: f.initialValue)
     };
     final errors = <String, String?>{};
+    bool saving = false;
 
     String? validate(String key, String value) {
       final v = value.trim();
       switch (key) {
         case 'full_name':
-        case 'fullName':
           if (v.isEmpty) return 'Full name is required.';
           if (v.length < 2) return 'Must be at least 2 characters.';
           return null;
@@ -3797,24 +2849,24 @@ class _DriverHomeState extends State<DriverHome>
           if (v.isEmpty) return null;
           final n = int.tryParse(v);
           if (n == null) return 'Age must be a number.';
-          if (n < 16 || n > 80) return 'Age must be 16–80.';
+          if (n < 16 || n > 80) return 'Age must be between 16 and 80.';
           return null;
         case 'phone':
           if (v.isEmpty) return null;
           final digits = v.replaceAll('+', '');
-          if (!RegExp(r'^\d+$').hasMatch(digits) ||
-              digits.length < 10)
-            return 'Enter a valid phone number.';
+          if (!RegExp(r'^\d+$').hasMatch(digits) || digits.length < 10) {
+            return 'Enter a valid phone number (min 10 digits).';
+          }
           return null;
         case 'email':
           if (v.isEmpty) return null;
-          if (!RegExp(r'^[\w\.\-]+@[\w\-]+\.\w{2,}$').hasMatch(v))
-            return 'Enter a valid email.';
+          if (!RegExp(r'^[\w\.\-]+@[\w\-]+\.\w{2,}$').hasMatch(v)) {
+            return 'Enter a valid email address.';
+          }
           return null;
         case 'address':
           if (v.isEmpty) return null;
-          if (v.length < 5)
-            return 'Address must be at least 5 chars.';
+          if (v.length < 5) return 'Address must be at least 5 characters.';
           return null;
         default:
           return null;
@@ -3828,139 +2880,118 @@ class _DriverHomeState extends State<DriverHome>
       builder: (ctx) {
         return StatefulBuilder(builder: (ctx2, setSt) {
           final t = _t;
-          bool saving = false;
           return Padding(
-            padding: EdgeInsets.only(
-                bottom: MediaQuery.of(ctx2).viewInsets.bottom),
+            padding:
+                EdgeInsets.only(bottom: MediaQuery.of(ctx2).viewInsets.bottom),
             child: SingleChildScrollView(
               child: Container(
-                margin: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                padding: const EdgeInsets.all(20),
+                margin: const EdgeInsets.fromLTRB(12, 12, 12, 20),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: t.bgLight,
+                  color: t.appBarBg,
                   borderRadius: BorderRadius.circular(20),
-                  border:
-                      Border.all(color: t.border, width: 1.5),
+                  border: Border.all(color: t.border, width: 1.5),
                 ),
-                child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
                   Row(children: [
-                    Icon(_IC.edit, color: t.accent, size: 18),
-                    const SizedBox(width: 8),
+                    Icon(Icons.edit_outlined, color: t.accent, size: 17),
+                    const SizedBox(width: 7),
                     Text(title,
                         style: TextStyle(
                             color: t.textPrimary,
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.w800)),
                     const Spacer(),
                     GestureDetector(
-                        onTap: () => Navigator.pop(ctx2),
-                        child: Icon(Icons.close,
-                            color: t.textMuted, size: 20)),
+                      onTap: () => Navigator.pop(ctx2),
+                      child: Icon(Icons.close, color: t.textMuted, size: 19),
+                    ),
                   ]),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
                   ...fields.map((f) {
                     final hasError = errors[f.key] != null;
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 14),
+                      padding: const EdgeInsets.only(bottom: 12),
                       child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(f.label,
                               style: TextStyle(
-                                  color: hasError
-                                      ? t.red
-                                      : t.textMuted,
+                                  color: hasError ? t.red : t.textMuted,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 5),
                           Container(
                             decoration: BoxDecoration(
                               color: t.bgDeep,
-                              borderRadius:
-                                  BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: hasError
-                                    ? t.red
-                                    : t.border,
+                                color: hasError ? t.red : t.border,
                                 width: hasError ? 1.5 : 1,
                               ),
                             ),
                             child: TextField(
                               controller: controllers[f.key],
                               keyboardType: f.keyboardType,
-                              style: TextStyle(
-                                  color: t.textPrimary,
-                                  fontSize: 13),
+                              style:
+                                  TextStyle(color: t.textPrimary, fontSize: 13),
                               cursorColor: t.accent,
                               onChanged: (_) {
-                                if (errors[f.key] != null)
-                                  setSt(
-                                      () => errors[f.key] = null);
+                                if (errors[f.key] != null) {
+                                  setSt(() => errors[f.key] = null);
+                                }
                               },
                               decoration: InputDecoration(
                                 hintText: f.label,
-                                hintStyle: TextStyle(
-                                    color: t.textMuted,
-                                    fontSize: 13),
+                                hintStyle:
+                                    TextStyle(color: t.textMuted, fontSize: 13),
                                 border: InputBorder.none,
-                                contentPadding:
-                                    const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 13),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 12),
                               ),
                             ),
                           ),
                           if (hasError) ...[
                             const SizedBox(height: 3),
                             Row(children: [
-                              Icon(Icons.error_outline,
-                                  color: t.red, size: 11),
+                              Icon(Icons.error_outline, color: t.red, size: 11),
                               const SizedBox(width: 3),
                               Text(errors[f.key]!,
-                                  style: TextStyle(
-                                      color: t.red,
-                                      fontSize: 10)),
+                                  style: TextStyle(color: t.red, fontSize: 10)),
                             ]),
                           ],
                         ],
                       ),
                     );
                   }),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   GestureDetector(
                     onTap: saving
                         ? null
                         : () async {
                             bool hasErrors = false;
-                            final newErrors =
-                                <String, String?>{};
+                            final newErrors = <String, String?>{};
                             for (final f in fields) {
-                              final err = validate(f.key,
-                                  controllers[f.key]!.text);
+                              final err =
+                                  validate(f.key, controllers[f.key]!.text);
                               if (err != null) {
                                 newErrors[f.key] = err;
                                 hasErrors = true;
                               }
                             }
                             if (hasErrors) {
-                              setSt(() =>
-                                  errors.addAll(newErrors));
+                              setSt(() => errors.addAll(newErrors));
                               return;
                             }
                             setSt(() => saving = true);
                             final updates = {
                               for (final f in fields)
-                                f.key: controllers[f.key]!
-                                    .text
-                                    .trim()
+                                f.key: controllers[f.key]!.text.trim()
                             };
-                            final ok =
-                                await _updateProfile(updates);
-                            if (ctx2.mounted)
+                            final ok = await _updateProfile(updates);
+                            if (ctx2.mounted) {
                               Navigator.pop(ctx2);
+                            }
                             _showSnack(
                               ok
                                   ? 'Profile updated!'
@@ -3970,12 +3001,9 @@ class _DriverHomeState extends State<DriverHome>
                           },
                     child: Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
                       decoration: BoxDecoration(
-                        color: saving
-                            ? _o(t.accent, 0.5)
-                            : t.accent,
+                        color: saving ? _o(t.accent, 0.5) : t.accent,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: saving
                             ? null
@@ -3983,8 +3011,7 @@ class _DriverHomeState extends State<DriverHome>
                                 BoxShadow(
                                     color: _o(t.accent, 0.4),
                                     blurRadius: 10,
-                                    offset:
-                                        const Offset(0, 4))
+                                    offset: const Offset(0, 4))
                               ],
                       ),
                       child: saving
@@ -3993,23 +3020,19 @@ class _DriverHomeState extends State<DriverHome>
                                 width: 18,
                                 height: 18,
                                 child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2),
+                                    color: Colors.white, strokeWidth: 2),
                               ),
                             )
                           : const Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(_IC.save,
-                                    color: Colors.white,
-                                    size: 17),
+                                Icon(Icons.save_outlined,
+                                    color: Colors.white, size: 17),
                                 SizedBox(width: 7),
                                 Text('Save Changes',
                                     style: TextStyle(
                                         color: Colors.white,
-                                        fontWeight:
-                                            FontWeight.w800,
+                                        fontWeight: FontWeight.w800,
                                         fontSize: 14)),
                               ],
                             ),
@@ -4022,9 +3045,114 @@ class _DriverHomeState extends State<DriverHome>
         });
       },
     ).whenComplete(() {
-      for (final c in controllers.values) c.dispose();
+      for (final c in controllers.values) {
+        c.dispose();
+      }
     });
   }
+
+  Widget _infoCard({
+    required Color dotColor,
+    required String title,
+    required IconData titleIcon,
+    required Widget child,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _t.bgCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _t.border, width: 1),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(titleIcon, color: dotColor, size: 15),
+          const SizedBox(width: 6),
+          Text(title,
+              style: TextStyle(
+                  color: _t.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700)),
+        ]),
+        const SizedBox(height: 10),
+        child,
+      ]),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value,
+      {Color? valueColor}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 7),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(children: [
+            Icon(icon, color: _t.textMuted, size: 13),
+            const SizedBox(width: 5),
+            Text(label, style: TextStyle(color: _t.textMuted, fontSize: 11)),
+          ]),
+          Flexible(
+            child: Text(value,
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                    color: valueColor ?? _t.textPrimary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600),
+                overflow: TextOverflow.ellipsis),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvatarWidget(
+      {required double radius, required double fontSize}) {
+    final profile = _driverProfile;
+    final photoUrl = profile?.profilePhotoUrl;
+    final initial = profile?.fullName.isNotEmpty == true
+        ? profile!.fullName[0].toUpperCase()
+        : 'D';
+
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      final isBase64 = !photoUrl.startsWith('http');
+      return CircleAvatar(
+        radius: radius,
+        backgroundColor: _o(_t.accent, 0.2),
+        backgroundImage: isBase64
+            ? MemoryImage(base64Decode(photoUrl))
+            : NetworkImage(photoUrl) as ImageProvider,
+        onBackgroundImageError: (_, __) {},
+        child: null,
+      );
+    }
+
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: _o(_t.accent, 0.2),
+      child: Text(initial,
+          style: TextStyle(
+              color: _t.accent,
+              fontWeight: FontWeight.w800,
+              fontSize: fontSize)),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum _DocSlot { license, vehicle, toda }
+
+class _EditField {
+  final String label;
+  final String key;
+  final String initialValue;
+  final TextInputType keyboardType;
+
+  const _EditField(this.label, this.key, this.initialValue,
+      {this.keyboardType = TextInputType.text});
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4034,7 +3162,7 @@ class _DriverHomeState extends State<DriverHome>
 class _RideRequestSheet extends StatefulWidget {
   final RideRequest req;
   final FareConfig fareConfig;
-  final DriverThemeColors themeColors;
+  final AppThemeColors themeColors;
   final VoidCallback onAccept;
   final VoidCallback onDecline;
 
@@ -4052,7 +3180,8 @@ class _RideRequestSheet extends StatefulWidget {
 
 class _RideRequestSheetState extends State<_RideRequestSheet>
     with SingleTickerProviderStateMixin {
-  DriverThemeColors get t => widget.themeColors;
+  AppThemeColors get t => widget.themeColors;
+  Color _o(Color c, double a) => c.withValues(alpha: a);
 
   late AnimationController _ctrl;
   late Animation<double> _scale;
@@ -4063,8 +3192,7 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 350));
+        vsync: this, duration: const Duration(milliseconds: 350));
     _scale = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack);
     _ctrl.forward();
 
@@ -4107,22 +3235,20 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
             margin: const EdgeInsets.fromLTRB(12, 12, 12, 20),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: t.bgLight,
+              color: t.appBarBg,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: t.border, width: 1.5),
               boxShadow: [
                 BoxShadow(
-                    color: _o(t.green, 0.15),
-                    blurRadius: 30,
-                    spreadRadius: 4),
+                    color: _o(t.green, 0.15), blurRadius: 30, spreadRadius: 4),
               ],
             ),
-            child:
-                Column(mainAxisSize: MainAxisSize.min, children: [
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
               Row(children: [
                 _PulsingDot(color: t.orange),
                 const SizedBox(width: 8),
-                Icon(_IC.car, color: t.textPrimary, size: 16),
+                Icon(Icons.directions_car_outlined,
+                    color: t.textPrimary, size: 16),
                 const SizedBox(width: 5),
                 Expanded(
                   child: Text('New Ride Request!',
@@ -4134,21 +3260,16 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
                 SizedBox(
                   width: 38,
                   height: 38,
-                  child: Stack(
-                      alignment: Alignment.center,
-                      children: [
+                  child: Stack(alignment: Alignment.center, children: [
                     CircularProgressIndicator(
                       value: _countdown / 30,
                       strokeWidth: 3,
                       backgroundColor: t.border,
-                      color:
-                          _countdown > 10 ? t.green : t.red,
+                      color: _countdown > 10 ? t.green : t.red,
                     ),
                     Text('$_countdown',
                         style: TextStyle(
-                            color: _countdown > 10
-                                ? t.green
-                                : t.red,
+                            color: _countdown > 10 ? t.green : t.red,
                             fontSize: 11,
                             fontWeight: FontWeight.w700)),
                   ]),
@@ -4168,36 +3289,32 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                    Text(req.passengerName,
-                        style: TextStyle(
-                            color: t.textPrimary,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13),
-                        overflow: TextOverflow.ellipsis),
-                    Row(children: [
-                      Icon(Icons.straighten_outlined,
-                          color: t.textMuted, size: 11),
-                      const SizedBox(width: 2),
-                      Text(
-                          '${req.distanceKm.toStringAsFixed(1)} km route',
-                          style: TextStyle(
-                              color: t.textMuted,
-                              fontSize: 11)),
-                    ]),
-                  ]),
+                        Text(req.passengerName,
+                            style: TextStyle(
+                                color: t.textPrimary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13),
+                            overflow: TextOverflow.ellipsis),
+                        Row(children: [
+                          Icon(Icons.straighten_outlined,
+                              color: t.textMuted, size: 11),
+                          const SizedBox(width: 2),
+                          Text('${req.distanceKm.toStringAsFixed(1)} km route',
+                              style:
+                                  TextStyle(color: t.textMuted, fontSize: 11)),
+                        ]),
+                      ]),
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 7),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(
                     color: _o(t.green, 0.12),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color: _o(t.green, 0.35)),
+                    border: Border.all(color: _o(t.green, 0.35)),
                   ),
                   child: Column(children: [
                     Text('₱${displayFare.toStringAsFixed(2)}',
@@ -4206,22 +3323,22 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
                             fontWeight: FontWeight.w900,
                             fontSize: 17)),
                     if (cfg.surgeEnabled)
-                      Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                        Icon(_IC.bolt,
-                            color: t.orange, size: 9),
-                        Text(
-                            'surge ×${cfg.surgeMultiplier.toStringAsFixed(1)}',
+                      Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.bolt, color: t.orange, size: 9),
+                        Text('surge ×${cfg.surgeMultiplier.toStringAsFixed(1)}',
                             style: TextStyle(
                                 color: t.orange,
                                 fontSize: 9,
                                 fontWeight: FontWeight.w700)),
                       ])
                     else
-                      Text('fare',
-                          style: TextStyle(
-                              color: t.textMuted, fontSize: 9)),
+                      Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.credit_card_outlined,
+                            color: t.textMuted, size: 9),
+                        const SizedBox(width: 2),
+                        Text('fare',
+                            style: TextStyle(color: t.textMuted, fontSize: 9)),
+                      ]),
                   ]),
                 ),
               ]),
@@ -4229,63 +3346,57 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
               Container(
                 padding: const EdgeInsets.all(9),
                 decoration: BoxDecoration(
-                  color: t.card,
+                  color: t.bgCard,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: t.border),
                 ),
                 child: Column(children: [
-                  _sheetFareRow(t, 'Base fare',
-                      '₱${cfg.baseFare.toStringAsFixed(2)}'),
-                  _sheetFareRow(
+                  _fareRow(
+                      t, 'Base fare', '₱${cfg.baseFare.toStringAsFixed(2)}'),
+                  _fareRow(
                       t,
                       '${req.distanceKm.toStringAsFixed(1)} km × ₱${cfg.perKmRate.toStringAsFixed(2)}',
                       '₱${(req.distanceKm * cfg.perKmRate).toStringAsFixed(2)}'),
                   if (cfg.surgeEnabled)
-                    _sheetFareRow(
+                    _fareRow(
                         t,
                         'Surge ×${cfg.surgeMultiplier.toStringAsFixed(1)}',
                         '+${((cfg.surgeMultiplier - 1) * 100).toStringAsFixed(0)}%',
                         valueColor: t.orange),
                   if (cfg.bookingFee > 0)
-                    _sheetFareRow(t, 'Booking fee',
+                    _fareRow(t, 'Booking fee',
                         '₱${cfg.bookingFee.toStringAsFixed(2)}'),
                   Divider(color: t.border, height: 10),
-                  _sheetFareRow(
-                      t,
-                      'TOTAL',
-                      '₱${displayFare.toStringAsFixed(2)}',
-                      bold: true,
-                      valueColor: t.green),
+                  _fareRow(t, 'TOTAL', '₱${displayFare.toStringAsFixed(2)}',
+                      bold: true, valueColor: t.green),
                 ]),
               ),
               const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: t.card,
+                  color: t.bgCard,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: t.border),
                 ),
                 child: Column(children: [
-                  _sheetRouteLine(t, _IC.pickup, t.green,
-                      'Pickup', req.pickupLabel),
+                  _routeLine(t, Icons.radio_button_checked, t.green, 'Pickup',
+                      req.pickupLabel),
                   Padding(
                     padding: const EdgeInsets.only(left: 8),
                     child: Column(
                       children: List.generate(
                           3,
                           (_) => Container(
-                                margin:
-                                    const EdgeInsets.symmetric(
-                                        vertical: 2),
+                                margin: const EdgeInsets.symmetric(vertical: 2),
                                 width: 1.5,
                                 height: 4,
                                 color: t.border,
                               )),
                     ),
                   ),
-                  _sheetRouteLine(t, _IC.dropoff, t.red,
-                      'Dropoff', req.dropoffLabel),
+                  _routeLine(t, Icons.location_on_outlined, t.red, 'Dropoff',
+                      req.dropoffLabel),
                 ]),
               ),
               const SizedBox(height: 12),
@@ -4294,20 +3405,16 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
                   child: GestureDetector(
                     onTap: widget.onDecline,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
                         color: _o(t.red, 0.1),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                            color: _o(t.red, 0.3)),
+                        border: Border.all(color: _o(t.red, 0.3)),
                       ),
                       child: Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.close,
-                              color: t.red, size: 15),
+                          Icon(Icons.close, color: t.red, size: 15),
                           const SizedBox(width: 5),
                           Text('Decline',
                               style: TextStyle(
@@ -4325,8 +3432,7 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
                   child: GestureDetector(
                     onTap: widget.onAccept,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
                         color: t.green,
                         borderRadius: BorderRadius.circular(12),
@@ -4338,10 +3444,9 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
                         ],
                       ),
                       child: Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(_IC.check,
+                          const Icon(Icons.check_circle_outline,
                               color: Colors.white, size: 16),
                           const SizedBox(width: 5),
                           const Text('Accept Ride',
@@ -4362,54 +3467,41 @@ class _RideRequestSheetState extends State<_RideRequestSheet>
     );
   }
 
-  Widget _sheetFareRow(DriverThemeColors t, String label,
-      String value,
+  Widget _fareRow(AppThemeColors t, String label, String value,
       {bool bold = false, Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Flexible(
           child: Text(label,
               style: TextStyle(
                   color: bold ? t.textPrimary : t.textMuted,
                   fontSize: 11,
-                  fontWeight: bold
-                      ? FontWeight.w700
-                      : FontWeight.normal),
+                  fontWeight: bold ? FontWeight.w700 : FontWeight.normal),
               overflow: TextOverflow.ellipsis),
         ),
         const SizedBox(width: 6),
         Text(value,
             style: TextStyle(
-                color: valueColor ??
-                    (bold ? t.green : t.textPrimary),
+                color: valueColor ?? (bold ? t.green : t.textPrimary),
                 fontSize: 11,
-                fontWeight: bold
-                    ? FontWeight.w800
-                    : FontWeight.w600)),
+                fontWeight: bold ? FontWeight.w800 : FontWeight.w600)),
       ]),
     );
   }
 
-  Widget _sheetRouteLine(DriverThemeColors t, IconData icon,
-      Color color, String label, String sub) {
+  Widget _routeLine(
+      AppThemeColors t, IconData icon, Color color, String label, String sub) {
     return Row(children: [
       Icon(icon, color: color, size: 16),
       const SizedBox(width: 8),
       Expanded(
-        child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(label,
               style: TextStyle(
-                  color: color,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600)),
+                  color: color, fontSize: 9, fontWeight: FontWeight.w600)),
           Text(sub,
-              style:
-                  TextStyle(color: t.textPrimary, fontSize: 11),
+              style: TextStyle(color: t.textPrimary, fontSize: 11),
               overflow: TextOverflow.ellipsis),
         ]),
       ),
@@ -4444,12 +3536,11 @@ class _DriverMarkerState extends State<_DriverMarker>
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(
-        vsync: this,
-        duration: const Duration(seconds: 1))
-      ..repeat(reverse: true);
-    _pulse = Tween(begin: 0.85, end: 1.15).animate(
-        CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+    _ctrl =
+        AnimationController(vsync: this, duration: const Duration(seconds: 1))
+          ..repeat(reverse: true);
+    _pulse = Tween(begin: 0.85, end: 1.15)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -4460,8 +3551,7 @@ class _DriverMarkerState extends State<_DriverMarker>
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        widget.isOnline ? widget.onlineColor : widget.offlineColor;
+    final color = widget.isOnline ? widget.onlineColor : widget.offlineColor;
 
     return AnimatedBuilder(
       animation: _pulse,
@@ -4473,8 +3563,7 @@ class _DriverMarkerState extends State<_DriverMarker>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: color,
-            border:
-                Border.all(color: Colors.white, width: 2.5),
+            border: Border.all(color: Colors.white, width: 2.5),
             boxShadow: [
               BoxShadow(
                   color: color.withValues(alpha: 0.5),
@@ -4483,7 +3572,7 @@ class _DriverMarkerState extends State<_DriverMarker>
             ],
           ),
           child: const Center(
-            child: Icon(_IC.car, color: Colors.white, size: 22),
+            child: Icon(Icons.directions_car, color: Colors.white, size: 22),
           ),
         ),
       ),
@@ -4506,22 +3595,18 @@ class _RouteMarker extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(mainAxisSize: MainAxisSize.min, children: [
       Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
         decoration: BoxDecoration(
-          color: color,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(6),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 6),
+                color: Colors.black.withValues(alpha: 0.2), blurRadius: 6),
           ],
         ),
         child: Text(label,
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 9,
-                fontWeight: FontWeight.w700)),
+            style: TextStyle(
+                color: color, fontSize: 9, fontWeight: FontWeight.w700)),
       ),
       const SizedBox(height: 2),
       Icon(icon, color: color, size: 26),
@@ -4549,11 +3634,9 @@ class _PulsingDotState extends State<_PulsingDot>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 800))
+        vsync: this, duration: const Duration(milliseconds: 800))
       ..repeat(reverse: true);
-    _anim = Tween<double>(begin: 0.4, end: 1.0).animate(
-        CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+    _anim = Tween(begin: 0.5, end: 1.0).animate(_ctrl);
   }
 
   @override
@@ -4567,16 +3650,16 @@ class _PulsingDotState extends State<_PulsingDot>
     return AnimatedBuilder(
       animation: _anim,
       builder: (_, __) => Container(
-        width: 8,
-        height: 8,
+        width: 10,
+        height: 10,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: widget.color.withValues(alpha: _anim.value),
           boxShadow: [
             BoxShadow(
-                color: widget.color.withValues(alpha: 0.4),
-                blurRadius: 6 * _anim.value,
-                spreadRadius: 1.5 * _anim.value),
+                color: widget.color.withValues(alpha: 0.45),
+                blurRadius: 8 * _anim.value,
+                spreadRadius: 2 * _anim.value),
           ],
         ),
       ),

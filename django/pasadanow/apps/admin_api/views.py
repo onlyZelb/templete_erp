@@ -9,11 +9,17 @@ from .models import FareConfig
 
 
 class AllUsersView(APIView):
+    """
+    Returns all drivers + commuters WITHOUT photo blobs to keep the
+    response small and avoid 431 Request Header Fields Too Large errors.
+    Photos are fetched separately via /users/<id>/photos.
+    """
     permission_classes = [AllowAny]
 
     def get(self, request):
         users = []
 
+        # ── Drivers ────────────────────────────────────────────────────────
         with connection.cursor() as cursor:
             cursor.execute("""
                 SELECT id, username, full_name, phone, email,
@@ -27,6 +33,7 @@ class AllUsersView(APIView):
             drivers = [dict(zip(columns, row)) for row in cursor.fetchall()]
         users.extend(drivers)
 
+        # ── Commuters ──────────────────────────────────────────────────────
         with connection.cursor() as cursor:
             cursor.execute("""
                 SELECT id, username, full_name, phone, email,
@@ -43,6 +50,10 @@ class AllUsersView(APIView):
 
 
 class UserPhotosView(APIView):
+    """
+    Returns only the photo blobs for a single driver.
+    Called lazily by the frontend when the driver modal is opened.
+    """
     permission_classes = [AllowAny]
 
     def get(self, request, user_id):
@@ -95,6 +106,7 @@ class VerifyUserView(APIView):
                 'verified_status': row[2],
             })
 
+        # ── Driver ─────────────────────────────────────────────────────────
         with connection.cursor() as cursor:
             cursor.execute("""
                 UPDATE drivers SET verified_status = %s
@@ -153,40 +165,3 @@ class FareConfigView(APIView):
             'surge_active':     cfg.surge_active,
             'updated_at':       cfg.updated_at.isoformat() if cfg.updated_at else None,
         }
-
-
-# ── NEW: Reports ───────────────────────────────────────────────────────────────
-class AllReportsView(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT
-                    r.id,
-                    r.ride_id,
-                    r.reason,
-                    r.created_at,
-                    c.id          AS commuter_id,
-                    c.username    AS commuter_username,
-                    c.full_name   AS commuter_name,
-                    c.phone       AS commuter_phone,
-                    c.email       AS commuter_email,
-                    -- join rides to get driver info
-                    d.username    AS driver_username,
-                    d.full_name   AS driver_name
-                FROM reports r
-                JOIN commuters c ON c.id = r.commuter_id
-                LEFT JOIN rides ri ON ri.id = r.ride_id
-                LEFT JOIN drivers d ON d.id = ri.driver_id
-                ORDER BY r.created_at DESC
-            """)
-            columns = [col[0] for col in cursor.description]
-            rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-        # convert datetimes to strings
-        for row in rows:
-            if row.get('created_at'):
-                row['created_at'] = row['created_at'].isoformat()
-
-        return Response(rows)
